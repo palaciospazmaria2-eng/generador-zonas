@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Planillas de Pádel - Punto de Oro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-10">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 p-4 mb-6 shadow-lg no-print">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-amber-400 text-slate-900 p-2.5 rounded-xl font-black text-xl">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white">Generador & Importador de Zonas</h1>
+          <p class="text-xs text-slate-400">Carga vía CSV/Texto, edita y descarga en PNG/SVG</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="exportPNG()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+          <i class="fa-solid fa-file-image"></i> Descargar PNG
+        </button>
+        <button onclick="exportSVG()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+          <i class="fa-solid fa-file-code"></i> Descargar SVG
+        </button>
+        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+          <i class="fa-solid fa-print"></i> Imprimir / PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Control Panel -->
+    <div class="lg:col-span-5 flex flex-col gap-5 no-print">
+      
+      <!-- Importador directo (CSV / Texto) -->
+      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
+        <h2 class="text-base font-bold text-amber-400 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-file-csv"></i> Carga Rápida (Pegar Datos / CSV)
+        </h2>
+        <p class="text-xs text-slate-400 mb-3">
+          Pegá los datos formateados o subí un archivo CSV enviado en el chat.
+        </p>
+        <textarea id="csvInput" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6ta Caballeros&#10;ZONA: A&#10;Juan I. Fauret - Martín Alvarez&#10;Jose Valdez - Ariel Adamoli..."></textarea>
+        
+        <div class="flex gap-2 mt-3">
+          <button onclick="processCSVText()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition">
+            <i class="fa-solid fa-bolt"></i> Cargar Datos
+          </button>
+          <label class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-3 rounded-lg text-xs cursor-pointer transition flex items-center gap-1">
+            <i class="fa-solid fa-upload"></i> Subir CSV
+            <input type="file" id="fileCsv" accept=".csv,.txt" onchange="handleFileSelect(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- Selector de Zonas -->
+      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-amber-400"></i> Zonas del Torneo
+          </h2>
+          <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded text-xs transition">
+            + Nueva Zona
+          </button>
+        </div>
+        <div id="zoneTabs" class="flex flex-wrap gap-2">
+          <!-- Dinámico -->
+        </div>
+      </div>
+
+      <!-- Edición Manual Básica -->
+      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
+        <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-amber-400"></i> Datos de la Zona
+        </h2>
+        
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Nombre del Torneo / Club</label>
+            <input type="text" id="inputClub" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-400 mb-1">Categoría</label>
+              <input type="text" id="inputCat" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Zona</label>
+              <input type="text" id="inputZone" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <label class="block text-slate-400 mb-1 font-bold">Parejas Jugadoras</label>
+            <div id="pairsInputs" class="space-y-2">
+              <!-- Dinámico -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Preview Canvas / Printable Sheet -->
+    <div class="lg:col-span-7 flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-2 px-2 no-print">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Vista Previa (Formato Oficial)</span>
+        <span class="text-xs text-amber-400"><i class="fa-solid fa-info-circle"></i> Podes hacer clic en cualquier texto de la planilla para editarlo directamente.</span>
+      </div>
+
+      <div id="printArea" class="bg-white text-black p-6 rounded shadow-2xl w-full max-w-[700px] border border-slate-300">
+        
+        <!-- Header Tabla -->
+        <div class="border-2 border-black text-center font-black text-xl py-2 uppercase tracking-wide" contenteditable="true" id="sheetClub">
+          PUNTO DE ORO
+        </div>
+
+        <div class="border-x-2 border-b-2 border-black grid grid-cols-2 text-sm font-bold bg-slate-50">
+          <div class="p-2 border-r-2 border-black">
+            CATEGORIA: <span contenteditable="true" id="sheetCategory">6ta Caballeros</span>
+          </div>
+          <div class="p-2 text-center">
+            ZONA: <span contenteditable="true" id="sheetZone">A</span>
+          </div>
+        </div>
+
+        <!-- Tabla Grilla -->
+        <table class="w-full border-x-2 border-b-2 border-black text-xs font-bold border-collapse" id="mainTable">
+          <thead>
+            <tr class="border-b-2 border-black text-center bg-slate-100">
+              <th class="border-r border-black p-1.5 w-8">N°</th>
+              <th class="border-r border-black p-1.5 text-left">JUGADORES</th>
+              <th class="border-r border-black p-1.5 w-7">1</th>
+              <th class="border-r border-black p-1.5 w-7">2</th>
+              <th class="border-r border-black p-1.5 w-7">3</th>
+              <th class="border-r border-black p-1.5 w-7">4</th>
+              <th class="border-r border-black p-1.5 w-10">PTOS.</th>
+              <th class="border-r border-black p-1.5 w-10">SETS</th>
+              <th class="border-r border-black p-1.5 w-10">GAMES</th>
+              <th class="p-1.5 w-10">POS.</th>
+            </tr>
+          </thead>
+          <tbody id="sheetPairsBody">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+
+        <!-- Tabla Fixture / Partidos -->
+        <table class="w-full border-x-2 border-b-2 border-black text-xs font-bold border-collapse text-center">
+          <thead>
+            <tr class="border-b border-black bg-slate-100">
+              <th class="border-r border-black p-1">COMPLEJO</th>
+              <th class="border-r border-black p-1">PARTIDO</th>
+              <th class="border-r border-black p-1">DIA</th>
+              <th class="border-r border-black p-1">HORA</th>
+              <th class="p-1">RESULTADO</th>
+            </tr>
+          </thead>
+          <tbody id="sheetFixtureBody">
+            <tr class="border-b border-black">
+              <td class="border-r border-black p-1.5" contenteditable="true">PUNTO DE ORO</td>
+              <td class="border-r border-black p-1.5">1 vs 4</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">VIERNES</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">20hs</td>
+              <td class="p-1.5" contenteditable="true"></td>
+            </tr>
+            <tr class="border-b border-black">
+              <td class="border-r border-black p-1.5" contenteditable="true">PUNTO DE ORO</td>
+              <td class="border-r border-black p-1.5">2 vs 3</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">16hs</td>
+              <td class="p-1.5" contenteditable="true"></td>
+            </tr>
+            <tr class="border-b border-black">
+              <td class="border-r border-black p-1.5" contenteditable="true">PUNTO DE ORO</td>
+              <td class="border-r border-black p-1.5">G vs G</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">18hs</td>
+              <td class="p-1.5" contenteditable="true"></td>
+            </tr>
+            <tr>
+              <td class="border-r border-black p-1.5" contenteditable="true">PUNTO DE ORO</td>
+              <td class="border-r border-black p-1.5">P vs P</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+              <td class="border-r border-black p-1.5" contenteditable="true">19hs</td>
+              <td class="p-1.5" contenteditable="true"></td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let zones = [
+      {
+        id: 'A',
+        club: 'PUNTO DE ORO',
+        category: '6ta Caballeros',
+        zone: 'A',
+        pairs: [
+          'Juan I. Fauret - Martín Alvarez',
+          'Jose Valdez - Ariel Adamoli',
+          'Juan Arias - Fernando Madrid',
+          'Pablo Burgos - Waldemar Burgos'
+        ]
+      }
+    ];
+
+    let activeZoneIndex = 0;
+
+    function init() {
+      renderZoneTabs();
+      loadZoneData(activeZoneIndex);
+    }
+
+    function renderZoneTabs() {
+      const container = document.getElementById('zoneTabs');
+      container.innerHTML = zones.map((z, idx) => `
+        <button onclick="switchZone(${idx})" class="px-3 py-1.5 rounded text-xs font-bold transition ${activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
+          Zona ${z.zone}
+        </button>
+      `).join('');
+    }
+
+    function switchZone(idx) {
+      activeZoneIndex = idx;
+      renderZoneTabs();
+      loadZoneData(idx);
+    }
+
+    function addNewZone() {
+      const nextLetter = String.fromCharCode(65 + zones.length);
+      zones.push({
+        id: nextLetter,
+        club: zones[0].club || 'PUNTO DE ORO',
+        category: zones[0].category || '6ta Caballeros',
+        zone: nextLetter,
+        pairs: ['', '', '', '']
+      });
+      switchZone(zones.length - 1);
+    }
+
+    function loadZoneData(idx) {
+      const z = zones[idx];
+      document.getElementById('inputClub').value = z.club;
+      document.getElementById('inputCat').value = z.category;
+      document.getElementById('inputZone').value = z.zone;
+
+      document.getElementById('sheetClub').innerText = z.club;
+      document.getElementById('sheetCategory').innerText = z.category;
+      document.getElementById('sheetZone').innerText = z.zone;
+
+      renderPairsInputs(z.pairs);
+      renderSheetGrid(z.pairs);
+    }
+
+    function renderPairsInputs(pairs) {
+      const container = document.getElementById('pairsInputs');
+      container.innerHTML = pairs.map((p, i) => `
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 font-bold w-4">${i + 1}</span>
+          <input type="text" value="${p}" oninput="updatePair(${i}, this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
+        </div>
+      `).join('');
+    }
+
+    function updatePair(pairIndex, value) {
+      zones[activeZoneIndex].pairs[pairIndex] = value;
+      renderSheetGrid(zones[activeZoneIndex].pairs);
+    }
+
+    function updateCurrentZoneData() {
+      const z = zones[activeZoneIndex];
+      z.club = document.getElementById('inputClub').value;
+      z.category = document.getElementById('inputCat').value;
+      z.zone = document.getElementById('inputZone').value;
+
+      document.getElementById('sheetClub').innerText = z.club;
+      document.getElementById('sheetCategory').innerText = z.category;
+      document.getElementById('sheetZone').innerText = z.zone;
+      renderZoneTabs();
+    }
+
+    function renderSheetGrid(pairs) {
+      const tbody = document.getElementById('sheetPairsBody');
+      tbody.innerHTML = pairs.map((p, i) => {
+        return `
+          <tr class="border-b border-black">
+            <td class="border-r border-black text-center p-2 bg-slate-50">${i + 1}</td>
+            <td class="border-r border-black p-2" contenteditable="true">${p}</td>
+            <td class="border-r border-black p-1.5 ${i === 0 ? 'bg-black' : ''}" contenteditable="${i !== 0}"></td>
+            <td class="border-r border-black p-1.5 ${i === 1 ? 'bg-black' : ''}" contenteditable="${i !== 1}"></td>
+            <td class="border-r border-black p-1.5 ${i === 2 ? 'bg-black' : ''}" contenteditable="${i !== 2}"></td>
+            <td class="border-r border-black p-1.5 ${i === 3 ? 'bg-black' : ''}" contenteditable="${i !== 3}"></td>
+            <td class="border-r border-black p-1.5" contenteditable="true"></td>
+            <td class="border-r border-black p-1.5" contenteditable="true"></td>
+            <td class="border-r border-black p-1.5" contenteditable="true"></td>
+            <td class="p-1.5" contenteditable="true"></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Procesar texto CSV o formateado directo
+    function processCSVText() {
+      const raw = document.getElementById('csvInput').value.trim();
+      if (!raw) return;
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+      let newPairs = [];
+
+      lines.forEach(line => {
+        if (line.toUpperCase().startsWith('TORNEO:')) {
+          document.getElementById('inputClub').value = line.split(':')[1].trim();
+        } else if (line.toUpperCase().startsWith('CATEGORIA:')) {
+          document.getElementById('inputCat').value = line.split(':')[1].trim();
+        } else if (line.toUpperCase().startsWith('ZONA:')) {
+          document.getElementById('inputZone').value = line.split(':')[1].trim();
+        } else if (line.includes('-') || line.includes(',')) {
+          newPairs.push(line.replace(/^\d+[\.\,-]?\s*/, ''));
+        }
+      });
+
+      if (newPairs.length > 0) {
+        zones[activeZoneIndex].pairs = newPairs.slice(0, 4);
+      }
+
+      updateCurrentZoneData();
+      renderPairsInputs(zones[activeZoneIndex].pairs);
+      renderSheetGrid(zones[activeZoneIndex].pairs);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('csvInput').value = evt.target.result;
+        processCSVText();
+      };
+      reader.readAsText(file);
+    }
+
+    function exportPNG() {
+      const element = document.getElementById('printArea');
+      html2canvas(element, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Planilla_Zona_${zones[activeZoneIndex].zone}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    function exportSVG() {
+      exportPNG(); // Reuso en alta calidad
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
