@@ -6,13 +6,35 @@
   <title>Generador de Planillas de Pádel - Punto de Oro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
+    @page {
+      size: A4 landscape;
+      margin: 8mm;
+    }
     @media print {
-      body * { visibility: hidden; }
-      #printArea, #printArea * { visibility: visible; }
-      #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+      #exportContainer {
+        display: block !important;
+      }
+    }
+    /* Estilo Hoja A4 Horizontal (proporción 297mm x 210mm) */
+    .a4-landscape {
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 297 / 210;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -20,79 +42,423 @@
 
   <!-- Header -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 mb-6 shadow-lg no-print">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
         <div class="bg-amber-400 text-slate-900 p-2.5 rounded-xl font-black text-xl">
           <i class="fa-solid fa-trophy"></i>
         </div>
         <div>
-          <h1 class="text-xl font-bold tracking-tight text-white">Generador & Importador de Zonas</h1>
-          <p class="text-xs text-slate-400">Pegá el texto transcripto, edita y descarga en PNG/SVG</p>
+          <h1 class="text-xl font-bold tracking-tight text-white">Generador de Planillas - A4 Horizontal</h1>
+          <p class="text-xs text-slate-400">Exportá zonas individuales o el torneo completo en un solo PDF</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="exportPNG()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+
+      <!-- Opciones de Exportación -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs">
+          <label class="text-slate-400 px-2 font-semibold">Exportar:</label>
+          <select id="exportScope" class="bg-slate-800 text-white font-bold py-1 px-2 rounded focus:outline-none">
+            <option value="all">Todas las Zonas</option>
+            <option value="current">Solo Zona Activa</option>
+          </select>
+        </div>
+
+        <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
+          <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+        </button>
+        <button onclick="exportPNG()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
           <i class="fa-solid fa-file-image"></i> Descargar PNG
         </button>
-        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
-          <i class="fa-solid fa-print"></i> Imprimir / PDF
+        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-print"></i> Imprimir
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
 
-    <!-- Control Panel -->
-    <div class="lg:col-span-5 flex flex-col gap-5 no-print">
+    <!-- Panel Lateral de Control -->
+    <div class="lg:col-span-4 flex flex-col gap-5">
       
-      <!-- Importador directo (Texto Múltiple) -->
-      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
-        <h2 class="text-base font-bold text-amber-400 mb-2 flex items-center gap-2">
-          <i class="fa-solid fa-file-csv"></i> Carga Rápida (Pegar Transcripción)
+      <!-- Carga Rápida -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <h2 class="text-sm font-bold text-amber-400 mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-file-csv"></i> Carga Rápida
         </h2>
-        <p class="text-xs text-slate-400 mb-3">
-          Pegá el bloque de texto completo. Se crearán automáticamente las pestañas para cada zona.
+        <p class="text-xs text-slate-400 mb-2">
+          Pegá el texto transcripto para generar automáticamente todas las zonas.
         </p>
-        <textarea id="csvInput" rows="6" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue&#10;Paloma González - Nahuel Severino..."></textarea>
+        <textarea id="csvInput" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue..."></textarea>
         
-        <div class="flex gap-2 mt-3">
-          <button onclick="processCSVText()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-bolt"></i> Cargar Todas las Zonas
-          </button>
-        </div>
+        <button onclick="processCSVText()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-bolt"></i> Cargar Todas las Zonas
+        </button>
       </div>
 
-      <!-- Selector de Zonas -->
-      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
-        <div class="flex justify-between items-center mb-3">
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+      <!-- Pestañas de Zonas -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xs font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-amber-400"></i> Zonas Creadas
           </h2>
-          <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded text-xs transition">
-            + Nueva Zona
+          <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-xs transition">
+            + Nueva
           </button>
         </div>
-        <div id="zoneTabs" class="flex flex-wrap gap-2">
+        <div id="zoneTabs" class="flex flex-wrap gap-1.5">
           <!-- Dinámico -->
         </div>
       </div>
 
-      <!-- Edición Manual Básica -->
-      <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
-        <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+      <!-- Edición Manual -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <h2 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
           <i class="fa-solid fa-pen-to-square text-amber-400"></i> Datos de la Zona Activa
         </h2>
         
-        <div class="space-y-3 text-xs">
+        <div class="space-y-2 text-xs">
           <div>
             <label class="block text-slate-400 mb-1">Nombre del Torneo / Club</label>
-            <input type="text" id="inputClub" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+            <input type="text" id="inputClub" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-slate-400 mb-1">Categoría</label>
-              <input type="text" id="inputCat" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+              <input type="text" id="inputCat" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">
+              <label class="block text-slate-400 mb-1">Zona</label>
+              <input type="text" id="inputZone" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <label class="block text-slate-400 mb-1 font-bold">Parejas Jugadoras</label>
+            <div id="pairsInputs" class="space-y-1.5">
+              <!-- Dinámico -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Vista Previa de la Planilla A4 Horizontal -->
+    <div class="lg:col-span-8 flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-2 px-1">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Vista Previa A4 Horizontal</span>
+        <span class="text-xs text-amber-400"><i class="fa-solid fa-info-circle"></i> Haz clic en las celdas para editar texto.</span>
+      </div>
+
+      <div id="previewArea" class="a4-landscape bg-white text-black p-6 rounded shadow-2xl border border-slate-300 flex flex-col justify-between">
+        <!-- Render dinámico -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Oculto: Contenedor para la generación de PDFs/Impresión completa -->
+  <div id="exportContainer" class="hidden"></div>
+
+  <script>
+    let zones = [
+      {
+        id: 'A',
+        club: 'PUNTO DE ORO',
+        category: '6+7',
+        zone: 'A',
+        pairs: [
+          'Pilar Gianfrancesco - Pablo Gascue',
+          'Paloma González - Nahuel Severino',
+          'Silvina Pacheco - Sergio Antista',
+          'Sabrina Mozo - Mariano Díaz'
+        ]
+      }
+    ];
+
+    let activeZoneIndex = 0;
+
+    function init() {
+      renderZoneTabs();
+      loadZoneData(activeZoneIndex);
+    }
+
+    function renderZoneTabs() {
+      const container = document.getElementById('zoneTabs');
+      container.innerHTML = zones.map((z, idx) => `
+        <button onclick="switchZone(${idx})" class="px-2.5 py-1 rounded text-xs font-bold transition ${activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
+          Zona ${z.zone}
+        </button>
+      `).join('');
+    }
+
+    function switchZone(idx) {
+      if (idx < 0 || idx >= zones.length) return;
+      activeZoneIndex = idx;
+      renderZoneTabs();
+      loadZoneData(idx);
+    }
+
+    function addNewZone() {
+      const nextLetter = String.fromCharCode(65 + zones.length);
+      zones.push({
+        id: nextLetter,
+        club: zones[0]?.club || 'PUNTO DE ORO',
+        category: zones[0]?.category || '6+7',
+        zone: nextLetter,
+        pairs: ['', '', '', '']
+      });
+      switchZone(zones.length - 1);
+    }
+
+    function loadZoneData(idx) {
+      const z = zones[idx];
+      if (!z) return;
+
+      document.getElementById('inputClub').value = z.club || '';
+      document.getElementById('inputCat').value = z.category || '';
+      document.getElementById('inputZone').value = z.zone || '';
+
+      renderPairsInputs(z.pairs);
+      renderSheetHTML(document.getElementById('previewArea'), z);
+    }
+
+    function renderPairsInputs(pairs) {
+      const container = document.getElementById('pairsInputs');
+      container.innerHTML = pairs.map((p, i) => `
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 font-bold w-4 text-xs">${i + 1}</span>
+          <input type="text" value="${p || ''}" oninput="updatePair(${i}, this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-xs text-white">
+        </div>
+      `).join('');
+    }
+
+    function updatePair(pairIndex, value) {
+      zones[activeZoneIndex].pairs[pairIndex] = value;
+      renderSheetHTML(document.getElementById('previewArea'), zones[activeZoneIndex]);
+    }
+
+    function updateCurrentZoneData() {
+      const z = zones[activeZoneIndex];
+      if (!z) return;
+
+      z.club = document.getElementById('inputClub').value;
+      z.category = document.getElementById('inputCat').value;
+      z.zone = document.getElementById('inputZone').value;
+
+      renderZoneTabs();
+      renderSheetHTML(document.getElementById('previewArea'), z);
+    }
+
+    // Genera la plantilla HTML optimizada para A4 apaisado
+    function renderSheetHTML(targetElement, z) {
+      const safePairs = [...(z.pairs || [])];
+      while (safePairs.length < 4) safePairs.push('');
+
+      targetElement.innerHTML = `
+        <div class="w-full h-full flex flex-col justify-between">
+          <!-- Header Tabla -->
+          <div class="border-2 border-black text-center font-black text-2xl py-2 uppercase tracking-wide">
+            ${z.club || 'PUNTO DE ORO'}
+          </div>
+
+          <div class="border-x-2 border-b-2 border-black grid grid-cols-2 text-base font-bold bg-slate-50">
+            <div class="p-2 border-r-2 border-black">
+              CATEGORIA: <span>${z.category || '6+7'}</span>
+            </div>
+            <div class="p-2 text-center">
+              ZONA: <span>${z.zone || 'A'}</span>
+            </div>
+          </div>
+
+          <!-- Tabla Grilla -->
+          <table class="w-full border-x-2 border-b-2 border-black text-sm font-bold border-collapse my-auto">
+            <thead>
+              <tr class="border-b-2 border-black text-center bg-slate-100">
+                <th class="border-r border-black p-2 w-10">N°</th>
+                <th class="border-r border-black p-2 text-left">JUGADORES</th>
+                <th class="border-r border-black p-2 w-10">1</th>
+                <th class="border-r border-black p-2 w-10">2</th>
+                <th class="border-r border-black p-2 w-10">3</th>
+                <th class="border-r border-black p-2 w-10">4</th>
+                <th class="border-r border-black p-2 w-14">PTOS.</th>
+                <th class="border-r border-black p-2 w-14">SETS</th>
+                <th class="border-r border-black p-2 w-14">GAMES</th>
+                <th class="p-2 w-14">POS.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${safePairs.slice(0, 4).map((p, i) => `
+                <tr class="border-b border-black">
+                  <td class="border-r border-black text-center p-2.5 bg-slate-50">${i + 1}</td>
+                  <td class="border-r border-black p-2.5" contenteditable="true">${p || ''}</td>
+                  <td class="border-r border-black p-2 ${i === 0 ? 'bg-black' : ''}"></td>
+                  <td class="border-r border-black p-2 ${i === 1 ? 'bg-black' : ''}"></td>
+                  <td class="border-r border-black p-2 ${i === 2 ? 'bg-black' : ''}"></td>
+                  <td class="border-r border-black p-2 ${i === 3 ? 'bg-black' : ''}"></td>
+                  <td class="border-r border-black p-2" contenteditable="true"></td>
+                  <td class="border-r border-black p-2" contenteditable="true"></td>
+                  <td class="border-r border-black p-2" contenteditable="true"></td>
+                  <td class="p-2" contenteditable="true"></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <!-- Tabla Fixture / Partidos -->
+          <table class="w-full border-x-2 border-b-2 border-black text-xs font-bold border-collapse text-center">
+            <thead>
+              <tr class="border-b border-black bg-slate-100">
+                <th class="border-r border-black p-1.5">COMPLEJO</th>
+                <th class="border-r border-black p-1.5">PARTIDO</th>
+                <th class="border-r border-black p-1.5">DIA</th>
+                <th class="border-r border-black p-1.5">HORA</th>
+                <th class="p-1.5">RESULTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-black">
+                <td class="border-r border-black p-1.5" contenteditable="true">${z.club || 'PUNTO DE ORO'}</td>
+                <td class="border-r border-black p-1.5">1 vs 4</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">VIERNES</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">20hs</td>
+                <td class="p-1.5" contenteditable="true"></td>
+              </tr>
+              <tr class="border-b border-black">
+                <td class="border-r border-black p-1.5" contenteditable="true">${z.club || 'PUNTO DE ORO'}</td>
+                <td class="border-r border-black p-1.5">2 vs 3</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">16hs</td>
+                <td class="p-1.5" contenteditable="true"></td>
+              </tr>
+              <tr class="border-b border-black">
+                <td class="border-r border-black p-1.5" contenteditable="true">${z.club || 'PUNTO DE ORO'}</td>
+                <td class="border-r border-black p-1.5">G vs G</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">18hs</td>
+                <td class="p-1.5" contenteditable="true"></td>
+              </tr>
+              <tr>
+                <td class="border-r border-black p-1.5" contenteditable="true">${z.club || 'PUNTO DE ORO'}</td>
+                <td class="border-r border-black p-1.5">P vs P</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">SÁBADO</td>
+                <td class="border-r border-black p-1.5" contenteditable="true">19hs</td>
+                <td class="p-1.5" contenteditable="true"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Procesar texto transcrito completo
+    function processCSVText() {
+      const raw = document.getElementById('csvInput').value.trim();
+      if (!raw) return;
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+      let parsedZones = [];
+      let currentClub = 'PUNTO DE ORO';
+      let currentCategory = '';
+      let currentZoneObj = null;
+
+      lines.forEach(line => {
+        const uLine = line.toUpperCase();
+
+        if (uLine.startsWith('TORNEO:')) {
+          currentClub = line.split(':')[1].trim();
+        } else if (uLine.startsWith('CATEGORIA:') || uLine.startsWith('CATEGORÍA:')) {
+          currentCategory = line.split(':')[1].trim();
+        } else if (uLine.includes('ZONA')) {
+          let zoneMatch = line.match(/ZONA[\s:]*([A-Za-z0-9]+)/i);
+          let zoneLetter = zoneMatch ? zoneMatch[1].toUpperCase() : 'A';
+
+          currentZoneObj = {
+            id: zoneLetter,
+            club: currentClub,
+            category: currentCategory || '6+7',
+            zone: zoneLetter,
+            pairs: []
+          };
+          parsedZones.push(currentZoneObj);
+        } else if (line.includes('-') && !uLine.startsWith('---') && !uLine.startsWith('###')) {
+          let cleanPair = line.replace(/^\d+[\.\,-]?\s*/, '').trim();
+          if (currentZoneObj) {
+            currentZoneObj.pairs.push(cleanPair);
+          } else {
+            currentZoneObj = {
+              id: 'A',
+              club: currentClub,
+              category: currentCategory || '6+7',
+              zone: 'A',
+              pairs: [cleanPair]
+            };
+            parsedZones.push(currentZoneObj);
+          }
+        }
+      });
+
+      if (parsedZones.length > 0) {
+        zones = parsedZones;
+        activeZoneIndex = 0;
+        renderZoneTabs();
+        loadZoneData(0);
+      }
+    }
+
+    // Exportación a PDF (A4 Apaisado / Horizontal)
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const scope = document.getElementById('exportScope').value;
+      const targetZones = scope === 'current' ? [zones[activeZoneIndex]] : zones;
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '1050px';
+      container.style.height = '740px';
+      document.body.appendChild(container);
+
+      for (let i = 0; i < targetZones.length; i++) {
+        const zone = targetZones[i];
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bg-white text-black p-8 w-full h-full flex flex-col justify-between';
+        renderSheetHTML(wrapper, zone);
+        container.innerHTML = '';
+        container.appendChild(wrapper);
+
+        const canvas = await html2canvas(wrapper, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+
+        if (i > 0) pdf.addPage('a4', 'landscape');
+        
+        // Ajuste en mm para A4 Apaisado (297mm x 210mm)
+        pdf.addImage(imgData, 'PNG', 10, 10, 277, 190);
+      }
+
+      document.body.removeChild(container);
+      pdf.save(`Planillas_Padel_${targetZones[0]?.category || 'Torneo'}.pdf`);
+    }
+
+    // Exportar PNG de la zona activa
+    function exportPNG() {
+      const element = document.getElementById('previewArea');
+      html2canvas(element, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Planilla_Zona_${zones[activeZoneIndex].zone}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
