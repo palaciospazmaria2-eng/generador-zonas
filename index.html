@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Planillas - Adaptable</title>
+  <title>Generador de Planillas Oficiales</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -16,9 +16,8 @@
 
     .a4-page-canvas {
       width: 900px;
-      height: 600px;
       background: #ffffff;
-      padding: 35px 40px;
+      padding: 30px 35px;
       box-sizing: border-box;
       display: flex;
       align-items: center;
@@ -47,7 +46,7 @@
       vertical-align: middle;
       font-weight: 700;
       color: #000000;
-      padding: 6px 4px;
+      padding: 5px 4px;
       font-size: 13px;
       line-height: 1.2;
     }
@@ -100,4 +99,56 @@
     <div class="lg:col-span-4 flex flex-col gap-5">
       
       <!-- Carga Rápida -->
-      <div class="bg-
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <h2 class="text-sm font-bold text-amber-400 mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-file-csv"></i> Carga Rápida
+        </h2>
+        <p class="text-xs text-slate-400 mb-2">
+          Pegá el texto transcripto para generar automáticamente todas las zonas.
+        </p>
+        <textarea id="csvInput" rows="6" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue..."></textarea>
+        
+        <button onclick="processCSVText()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-bolt"></i> Cargar Todas las Zonas
+        </button>
+      </div>
+
+      <!-- Pestañas de Zonas -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xs font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-amber-400"></i> Zonas Creadas
+          </h2>
+          <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-xs transition">
+            + Nueva
+          </button>
+        </div>
+        <div id="zoneTabs" class="flex flex-wrap gap-1.5">
+          <!-- Dinámico -->
+        </div>
+      </div>
+
+      <!-- Edición Manual -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+        <h2 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-amber-400"></i> Datos de la Zona Activa
+        </h2>
+        
+        <div class="space-y-2 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Nombre del Torneo / Club</label>
+            <input type="text" id="inputClub" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-400 mb-1">Categoría</label>
+              <input type="text" id="inputCat" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Zona</label>
+              <input type="text" id="inputZone" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <label class="block
