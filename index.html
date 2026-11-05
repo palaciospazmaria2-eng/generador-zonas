@@ -15,7 +15,8 @@
     }
 
     .sheet-canvas {
-      width: 850px;
+      width: 100%;
+      max-width: 850px;
       background: #ffffff;
       color: #000000;
       border: 2px solid #000000;
@@ -95,7 +96,7 @@
         <p class="text-xs text-slate-400 mb-2">
           Pegá el texto transcripto para generar automáticamente todas las zonas.
         </p>
-        <textarea id="csvInput" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue..."></textarea>
+        <textarea id="csvInput" rows="6" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue..."></textarea>
         
         <button onclick="processCSVText()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-bolt"></i> Cargar Todas las Zonas
@@ -148,31 +149,31 @@
         </div>
       </div>
 
-      <!-- Copys de Instagram -->
+      <!-- Copys para Instagram -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xs font-bold text-amber-400 flex items-center gap-2">
             <i class="fa-brands fa-instagram"></i> Copys para Instagram
           </h2>
-          <button onclick="generateInstagramCaptions()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2 py-0.5 rounded text-xs font-bold transition">
+          <button onclick="generateInstagramCaptions()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-[10px] font-bold transition">
             <i class="fa-solid fa-arrows-rotate"></i> Actualizar
           </button>
         </div>
-        <div class="space-y-3" id="captionsContainer">
+        <div id="captionsContainer" class="space-y-2 mt-2">
           <!-- Dinámico -->
         </div>
       </div>
 
     </div>
 
-    <!-- Vista Previa -->
+    <!-- Vista Previa de la Planilla A4 -->
     <div class="lg:col-span-8 flex flex-col items-center">
       <div class="w-full flex justify-between items-center mb-2 px-1">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Vista Previa Hoja A4</span>
         <span class="text-xs text-amber-400"><i class="fa-solid fa-info-circle"></i> Podés hacer clic en las celdas para editar texto.</span>
       </div>
 
-      <div class="w-full overflow-x-auto bg-slate-950/50 p-4 rounded-xl border border-slate-800 flex justify-center">
+      <div class="w-full flex justify-center bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-inner">
         <div id="previewArea" class="sheet-canvas shadow-2xl">
           <!-- Render dinámico -->
         </div>
@@ -208,7 +209,7 @@
       if (!container) return;
       container.innerHTML = zones.map(function(z, idx) {
         var count = z.pairs ? z.pairs.filter(function(p) { return p && p.trim(); }).length : 0;
-        return '<button onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition ' + (activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600') + '">Zona ' + (z.zone || 'A') + ' (' + count + ')</button>';
+        return '<button onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition ' + (activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600') + '">Zona ' + z.zone + ' (' + count + ')</button>';
       }).join('');
     }
 
@@ -260,7 +261,6 @@
     }
 
     function updatePair(pairIndex, value) {
-      if (!zones[activeZoneIndex]) return;
       zones[activeZoneIndex].pairs[pairIndex] = value;
       renderSheetHTML(document.getElementById('previewArea'), zones[activeZoneIndex]);
     }
@@ -289,7 +289,7 @@
       var is4Pairs = validPairs.length > 3;
       var numRows = is4Pairs ? 4 : 3;
 
-      var safePairs = (z.pairs && z.pairs.length > 0) ? z.pairs.slice() : ['', '', ''];
+      var safePairs = validPairs.slice();
       while (safePairs.length < numRows) safePairs.push('');
 
       var defaultFixture = is4Pairs
@@ -334,7 +334,7 @@
         '</tr>';
       }).join('');
 
-      targetElement.innerHTML = '<div class="w-full bg-white p-2 box-border">' +
+      targetElement.innerHTML = '<div class="w-full bg-white">' +
         '<div style="font-size: 24px; font-weight: 900; text-align: center; padding: 8px 0; text-transform: uppercase; border-bottom: 2px solid #000;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</div>' +
         '<div style="display: flex; border-bottom: 2px solid #000; font-size: 14px; font-weight: 700;">' +
           '<div style="flex: 1; padding: 5px 10px; border-right: 2px solid #000; text-align: left;">CATEGORIA: <span contenteditable="true" style="font-size: 15px; margin-left: 4px;">' + (z.category || '5+6') + '</span></div>' +
@@ -430,7 +430,7 @@
       var container = document.getElementById('captionsContainer');
       if (!container) return;
 
-      var z = zones[activeZoneIndex] || zones[0] || {};
+      var z = zones[activeZoneIndex] || {};
       var club = z.club || 'PUNTO DE ORO';
       var category = z.category || '5+6';
       
@@ -441,7 +441,8 @@
         if (z.fixture[0].time) time = z.fixture[0].time;
       }
 
-      var cleanCat = category ? category.replace(/[^a-zA-Z0-9]/g, '') : '56';
+      var cleanClubTag = club.replace(/\s+/g, '');
+      var cleanCat = category.replace(/[^a-zA-Z0-9]/g, '');
 
       var v1 = "🎾 ¡SE VIENE UN FINDE A PURO PÁDEL EN " + club.toUpperCase() + "! 💥\n\n" +
                "Ya están confirmadas las zonas y los cruces para la categoría " + category + ".\n\n" +
@@ -450,7 +451,7 @@
                "Vení a alentar a tu pareja favorita, disfrutar de unos buenos mates y unas cuantas birras bien frías desde la tribuna 🍻🌭\n\n" +
                "📸 Deslizá para ver las zonas y los horarios de cada partido.\n\n" +
                " Dejanos en los comentarios: ¿Quiénes se llevan el trofeo esta fecha? ¡Nos vemos este finde a puro pádel! 🍻✨\n\n" +
-               "#Padel #TorneoDePadel #" + club.replace(/\s+/g, '') + " #FixturePadel #PadelMatch";
+               "#Padel #TorneoDePadel #" + cleanClubTag + " #FixturePadel #PadelMatch";
 
       var v2 = "🔥 ¡QUE GANES EL MEJOR! ZONAS CONFIRMADAS 🏆\n\n" +
                "Se picó la categoría " + category + " en " + club + ". Todo listo para vivir jornadas tremendas de puro nivel y partidos ajustados.\n\n" +
@@ -458,14 +459,14 @@
                "⏰ Arrancamos: " + day + " desde las " + time + "\n\n" +
                "Traé la remera de aliento y vení a bancar a los tuyos. El buffet ya está listo para el tercer tiempo 🍻🍔\n\n" +
                "👇 Revisá todas las zonas en el carrusel y decinos: ¿Cuál es la pareja candidata a ganar?\n\n" +
-               "#PadelTime #Torneo" + cleanCat + " #PadelArgentino #" + club.replace(/\s+/g, '');
+               "#PadelTime #Torneo" + cleanCat + " #PadelArgentino #" + cleanClubTag;
 
       var v3 = "📋 FIXTURE OFICIAL — CATEGORÍA " + category + " 🎾\n\n" +
                "La cancha ya tiene todo programado para este " + day + " a partir de las " + time + " en " + club + ".\n\n" +
                "Arrancan los cruces y nadie va a regalar nada. Vení a compartir un buen momento, mirar partidazos y brindar después del partido 🍻\n\n" +
                "📸 Guardá la publicación o deslizá para chequear horarios de tu zona.\n\n" +
                "¡Que sea un gran torneo y que gane el mejor! 🏆💪\n\n" +
-               "#Padel #FixtureOficial #CircuitoPadel #" + club.replace(/\s+/g, '');
+               "#Padel #FixtureOficial #CircuitoPadel #" + cleanClubTag;
 
       var options = [
         { title: 'Opción 1: Manija & Birras 🍻', text: v1 },
@@ -517,13 +518,12 @@
       });
 
       var pdfWidth = 277;
-      var pdfMaxHeight = 180;
+      var pdfMaxHeight = 190;
       var marginX = 10;
-      var marginY = 15;
+      var marginY = 10;
 
       var container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.top = '-9999px';
+      container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.width = '850px';
       document.body.appendChild(container);
@@ -538,7 +538,7 @@
         container.appendChild(box);
 
         var canvas = await html2canvas(box, { 
-          scale: 2.5,
+          scale: 3,
           useCORS: true,
           logging: false
         });
