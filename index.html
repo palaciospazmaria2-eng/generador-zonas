@@ -217,3 +217,101 @@
         fixture: []
       });
       switchZone(zones.length - 1);
+    }
+
+    function loadZoneData(idx) {
+      var z = zones[idx];
+      if (!z) return;
+
+      var clubElem = document.getElementById('inputClub');
+      var catElem = document.getElementById('inputCat');
+      var zoneElem = document.getElementById('inputZone');
+
+      if (clubElem) clubElem.value = z.club || '';
+      if (catElem) catElem.value = z.category || '';
+      if (zoneElem) zoneElem.value = z.zone || '';
+
+      renderPairsInputs(z.pairs || []);
+      renderSheetHTML(document.getElementById('previewArea'), z);
+    }
+
+    function renderPairsInputs(pairs) {
+      var container = document.getElementById('pairsInputs');
+      if (!container) return;
+      var safe = (pairs && pairs.length) ? pairs.slice() : ['', '', ''];
+
+      container.innerHTML = safe.map(function(p, i) {
+        return '<div class="flex items-center gap-1.5"><span class="text-slate-500 font-bold w-4 text-xs">' + (i + 1) + '</span><input type="text" value="' + (p || '') + '" oninput="updatePair(' + i + ', this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-xs text-white"></div>';
+      }).join('');
+    }
+
+    function updatePair(pairIndex, value) {
+      if (!zones[activeZoneIndex]) return;
+      if (!zones[activeZoneIndex].pairs) zones[activeZoneIndex].pairs = [];
+      zones[activeZoneIndex].pairs[pairIndex] = value;
+      renderSheetHTML(document.getElementById('previewArea'), zones[activeZoneIndex]);
+    }
+
+    function updateCurrentZoneData() {
+      var z = zones[activeZoneIndex];
+      if (!z) return;
+
+      var clubElem = document.getElementById('inputClub');
+      var catElem = document.getElementById('inputCat');
+      var zoneElem = document.getElementById('inputZone');
+
+      if (clubElem) z.club = clubElem.value;
+      if (catElem) z.category = catElem.value;
+      if (zoneElem) z.zone = zoneElem.value;
+
+      renderZoneTabs();
+      renderSheetHTML(document.getElementById('previewArea'), z);
+    }
+
+    function renderSheetHTML(targetElement, z) {
+      if (!targetElement || !z) return;
+
+      var rawPairs = z.pairs || [];
+      var validPairs = rawPairs.filter(function(p) { return p && p.trim().length > 0; });
+      
+      var is4Pairs = validPairs.length > 3 || rawPairs.length >= 4;
+      var numRows = is4Pairs ? 4 : 3;
+
+      var safePairs = rawPairs.slice();
+      while (safePairs.length < numRows) safePairs.push('');
+
+      var defaultFixture = is4Pairs
+        ? [
+            { match: '1 vs 4', day: 'VIERNES', time: '20HS' },
+            { match: '2 vs 3', day: 'SÁBADO', time: '16HS' },
+            { match: 'G vs G', day: 'SÁBADO', time: '18HS' },
+            { match: 'P vs P', day: 'SÁBADO', time: '19HS' }
+          ]
+        : [
+            { match: '1 vs 2', day: 'SÁBADO', time: '21HS' },
+            { match: '2 vs 3', day: 'VIERNES', time: '20HS' },
+            { match: '1 vs 3', day: 'SÁBADO', time: '17HS' }
+          ];
+
+      var fixtureRows = (z.fixture && z.fixture.length > 0) ? z.fixture : defaultFixture;
+      var jugWidth = is4Pairs ? '38%' : '43%';
+      var colWidth = '5%';
+
+      var rowsHTML = safePairs.slice(0, numRows).map(function(p, i) {
+        return '<tr>' +
+          '<td style="font-size: 13px;">' + (i + 1) + '</td>' +
+          '<td style="text-align: left; padding-left: 10px; font-size: 13px; font-weight: 700;" contenteditable="true">' + (p || '') + '</td>' +
+          '<td class="' + (i === 0 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 0) + '"></td>' +
+          '<td class="' + (i === 1 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 1) + '"></td>' +
+          '<td class="' + (i === 2 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 2) + '"></td>' +
+          (is4Pairs ? '<td class="' + (i === 3 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 3) + '"></td>' : '') +
+          '<td contenteditable="true"></td>' +
+          '<td contenteditable="true"></td>' +
+          '<td contenteditable="true"></td>' +
+          '<td contenteditable="true"></td>' +
+        '</tr>';
+      }).join('');
+
+      var matchNames4 = ['1 vs 4', '2 vs 3', 'G vs G', 'P vs P'];
+
+      var fixtureHTML = fixtureRows
