@@ -149,21 +149,6 @@
         </div>
       </div>
 
-      <!-- Copys para Instagram -->
-      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
-        <div class="flex justify-between items-center mb-2">
-          <h2 class="text-xs font-bold text-amber-400 flex items-center gap-2">
-            <i class="fa-brands fa-instagram"></i> Copys para Instagram
-          </h2>
-          <button onclick="generateInstagramCaptions()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-[10px] font-bold transition">
-            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
-          </button>
-        </div>
-        <div id="captionsContainer" class="space-y-2 mt-2">
-          <!-- Dinámico -->
-        </div>
-      </div>
-
     </div>
 
     <!-- Vista Previa de la Planilla A4 -->
@@ -247,7 +232,6 @@
 
       renderPairsInputs(z.pairs || []);
       renderSheetHTML(document.getElementById('previewArea'), z);
-      generateInstagramCaptions();
     }
 
     function renderPairsInputs(pairs) {
@@ -279,7 +263,6 @@
 
       renderZoneTabs();
       renderSheetHTML(document.getElementById('previewArea'), z);
-      generateInstagramCaptions();
     }
 
     function renderSheetHTML(targetElement, z) {
@@ -291,6 +274,10 @@
 
       var safePairs = validPairs.slice();
       while (safePairs.length < numRows) safePairs.push('');
+
+      var defaultMatchNames = is4Pairs 
+        ? ['1 vs 4', '2 vs 3', 'G vs G', 'P vs P']
+        : ['1 vs 2', '2 vs 3', '1 vs 3'];
 
       var defaultFixture = is4Pairs
         ? [
@@ -324,258 +311,12 @@
         '</tr>';
       }).join('');
 
-      var fixtureHTML = fixtureRows.slice(0, numRows).map(function(f) {
+      var fixtureHTML = fixtureRows.slice(0, numRows).map(function(f, i) {
+        // REGLA FORZADA: Si hay 4 parejas, el nombre del partido siempre es 1vs4, 2vs3, GvsG, PvsP
+        var finalMatchName = is4Pairs ? (defaultMatchNames[i] || f.match) : (f.match || defaultMatchNames[i]);
+
         return '<tr>' +
           '<td style="text-transform: uppercase;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</td>' +
-          '<td contenteditable="true">' + (f.match || '') + '</td>' +
+          '<td contenteditable="true">' + finalMatchName + '</td>' +
           '<td style="text-transform: uppercase;" contenteditable="true">' + (f.day || '') + '</td>' +
-          '<td contenteditable="true">' + (f.time || '') + '</td>' +
-          '<td contenteditable="true"></td>' +
-        '</tr>';
-      }).join('');
-
-      targetElement.innerHTML = '<div class="w-full bg-white">' +
-        '<div style="font-size: 24px; font-weight: 900; text-align: center; padding: 8px 0; text-transform: uppercase; border-bottom: 2px solid #000;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</div>' +
-        '<div style="display: flex; border-bottom: 2px solid #000; font-size: 14px; font-weight: 700;">' +
-          '<div style="flex: 1; padding: 5px 10px; border-right: 2px solid #000; text-align: left;">CATEGORIA: <span contenteditable="true" style="font-size: 15px; margin-left: 4px;">' + (z.category || '5+6') + '</span></div>' +
-          '<div style="flex: 1; padding: 5px 10px; text-align: center;">ZONA: <span contenteditable="true" style="font-size: 15px; margin-left: 4px;">' + (z.zone || 'A') + '</span></div>' +
-        '</div>' +
-        '<table class="sheet-table"><thead><tr style="font-size: 12px;"><th style="width: 5%;">N°</th><th style="width: ' + jugWidth + '; text-align: left; padding-left: 10px;">JUGADORES</th><th style="width: ' + colWidth + ';">1</th><th style="width: ' + colWidth + ';">2</th><th style="width: ' + colWidth + ';">3</th>' + (is4Pairs ? '<th style="width: ' + colWidth + ';">4</th>' : '') + '<th style="width: 9%;">PTOS.</th><th style="width: 9%;">SETS</th><th style="width: 10%;">GAMES</th><th style="width: 9%;">POS.</th></tr></thead><tbody>' + rowsHTML + '</tbody></table>' +
-        '<table class="sheet-table" style="border-top: none;"><thead><tr style="font-size: 12px;"><th style="width: 37%;">COMPLEJO</th><th style="width: 18%;">PARTIDO</th><th style="width: 15%;">DIA</th><th style="width: 12%;">HORA</th><th style="width: 18%;">RESULTADO</th></tr></thead><tbody>' + fixtureHTML + '</tbody></table>' +
-      '</div>';
-    }
-
-    function processCSVText() {
-      var csvElem = document.getElementById('csvInput');
-      if (!csvElem) return;
-      var raw = csvElem.value.trim();
-      if (!raw) return;
-
-      var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-      var parsedZones = [];
-      var currentClub = 'PUNTO DE ORO';
-      var currentCategory = '';
-      var currentZoneObj = null;
-
-      lines.forEach(function(line) {
-        var uLine = line.toUpperCase();
-
-        if (uLine.indexOf('TORNEO:') === 0) {
-          currentClub = line.split(':')[1].trim();
-        } else if (uLine.indexOf('CATEGORIA:') === 0 || uLine.indexOf('CATEGORÍA:') === 0) {
-          currentCategory = line.split(':')[1].trim();
-        } else if (uLine.indexOf('ZONA') !== -1) {
-          var zoneMatch = line.match(/ZONA[\s:]*([A-Za-z0-9]+)/i);
-          var zoneLetter = zoneMatch ? zoneMatch[1].toUpperCase() : 'A';
-
-          currentZoneObj = {
-            id: zoneLetter,
-            club: currentClub,
-            category: currentCategory || '5+6',
-            zone: zoneLetter,
-            pairs: [],
-            fixture: []
-          };
-          parsedZones.push(currentZoneObj);
-        } else if (line.indexOf('|') !== -1 || uLine.indexOf('VS') !== -1 || uLine.indexOf('HS') !== -1) {
-          if (currentZoneObj) {
-            var parts = line.split('|').map(function(p) { return p.trim(); });
-            if (parts.length >= 3) {
-              currentZoneObj.fixture.push({
-                match: parts[0],
-                day: parts[1],
-                time: parts[2]
-              });
-            } else {
-              var matchMatch = line.match(/(\d\s*vs\s*\d|[GP]\s*vs\s*[GP])/i);
-              var dayMatch = line.match(/(JUE|VIE|SAB|SÁB|DOM|LUN|MAR|MIE|MIÉ)/i);
-              var timeMatch = line.match(/(\d{1,2}(:\d{2})?\s*HS)/i);
-
-              if (matchMatch) {
-                currentZoneObj.fixture.push({
-                  match: matchMatch[0].toUpperCase(),
-                  day: dayMatch ? dayMatch[0].toUpperCase() : '',
-                  time: timeMatch ? timeMatch[0].toLowerCase() : ''
-                });
-              }
-            }
-          }
-        } else if (line.indexOf('-') !== -1 && uLine.indexOf('---') !== 0 && uLine.indexOf('###') !== 0) {
-          var cleanPair = line.replace(/^\d+[\.\,-]?\s*/, '').trim();
-          if (currentZoneObj) {
-            currentZoneObj.pairs.push(cleanPair);
-          } else {
-            currentZoneObj = {
-              id: 'A',
-              club: currentClub,
-              category: currentCategory || '5+6',
-              zone: 'A',
-              pairs: [cleanPair],
-              fixture: []
-            };
-            parsedZones.push(currentZoneObj);
-          }
-        }
-      });
-
-      if (parsedZones.length > 0) {
-        zones = parsedZones;
-        activeZoneIndex = 0;
-        renderZoneTabs();
-        loadZoneData(0);
-      }
-    }
-
-    function generateInstagramCaptions() {
-      var container = document.getElementById('captionsContainer');
-      if (!container) return;
-
-      var z = zones[activeZoneIndex] || {};
-      var club = z.club || 'PUNTO DE ORO';
-      var category = z.category || '5+6';
-      
-      var day = 'ESTE FINDE';
-      var time = '16HS';
-      if (z.fixture && z.fixture.length > 0) {
-        if (z.fixture[0].day) day = z.fixture[0].day.toUpperCase();
-        if (z.fixture[0].time) time = z.fixture[0].time;
-      }
-
-      var cleanClubTag = club.replace(/\s+/g, '');
-      var cleanCat = category.replace(/[^a-zA-Z0-9]/g, '');
-
-      var v1 = "🎾 ¡SE VIENE UN FINDE A PURO PÁDEL EN " + club.toUpperCase() + "! 💥\n\n" +
-               "Ya están confirmadas las zonas y los cruces para la categoría " + category + ".\n\n" +
-               "📍 ¿Dónde? " + club + "\n" +
-               "🗓️ ¿Cuándo? Desde este " + day + " a las " + time + ".\n\n" +
-               "Vení a alentar a tu pareja favorita, disfrutar de unos buenos mates y unas cuantas birras bien frías desde la tribuna 🍻🌭\n\n" +
-               "📸 Deslizá para ver las zonas y los horarios de cada partido.\n\n" +
-               " Dejanos en los comentarios: ¿Quiénes se llevan el trofeo esta fecha? ¡Nos vemos este finde a puro pádel! 🍻✨\n\n" +
-               "#Padel #TorneoDePadel #" + cleanClubTag + " #FixturePadel #PadelMatch";
-
-      var v2 = "🔥 ¡QUE GANES EL MEJOR! ZONAS CONFIRMADAS 🏆\n\n" +
-               "Se picó la categoría " + category + " en " + club + ". Todo listo para vivir jornadas tremendas de puro nivel y partidos ajustados.\n\n" +
-               "📍 Lugar: " + club + "\n" +
-               "⏰ Arrancamos: " + day + " desde las " + time + "\n\n" +
-               "Traé la remera de aliento y vení a bancar a los tuyos. El buffet ya está listo para el tercer tiempo 🍻🍔\n\n" +
-               "👇 Revisá todas las zonas en el carrusel y decinos: ¿Cuál es la pareja candidata a ganar?\n\n" +
-               "#PadelTime #Torneo" + cleanCat + " #PadelArgentino #" + cleanClubTag;
-
-      var v3 = "📋 FIXTURE OFICIAL — CATEGORÍA " + category + " 🎾\n\n" +
-               "La cancha ya tiene todo programado para este " + day + " a partir de las " + time + " en " + club + ".\n\n" +
-               "Arrancan los cruces y nadie va a regalar nada. Vení a compartir un buen momento, mirar partidazos y brindar después del partido 🍻\n\n" +
-               "📸 Guardá la publicación o deslizá para chequear horarios de tu zona.\n\n" +
-               "¡Que sea un gran torneo y que gane el mejor! 🏆💪\n\n" +
-               "#Padel #FixtureOficial #CircuitoPadel #" + cleanClubTag;
-
-      var options = [
-        { title: 'Opción 1: Manija & Birras 🍻', text: v1 },
-        { title: 'Opción 2: Picante 🔥', text: v2 },
-        { title: 'Opción 3: Clásica 📋', text: v3 }
-      ];
-
-      container.innerHTML = options.map(function(opt, idx) {
-        return '<div class="bg-slate-900 p-2 rounded border border-slate-700 text-xs shadow-sm mb-2">' +
-          '<div class="flex justify-between items-center mb-1">' +
-            '<span class="font-bold text-amber-400">' + opt.title + '</span>' +
-            '<button onclick="copyToClipboard(' + idx + ')" id="copyBtn_' + idx + '" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-[10px] font-bold transition flex items-center gap-1">' +
-              '<i class="fa-solid fa-copy"></i> Copiar' +
-            '</button>' +
-          '</div>' +
-          '<textarea id="captionText_' + idx + '" class="w-full bg-slate-950 text-slate-300 p-1.5 rounded text-[11px] font-mono border border-slate-800 focus:outline-none" rows="4" readonly>' + opt.text + '</textarea>' +
-        '</div>';
-      }).join('');
-    }
-
-    function copyToClipboard(idx) {
-      var textarea = document.getElementById('captionText_' + idx);
-      var btn = document.getElementById('copyBtn_' + idx);
-      if (!textarea) return;
-
-      textarea.select();
-      navigator.clipboard.writeText(textarea.value).then(function() {
-        if (btn) {
-          btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> ¡Copiado!';
-          btn.classList.replace('bg-slate-700', 'bg-emerald-800');
-          setTimeout(function() {
-            btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar';
-            btn.classList.replace('bg-emerald-800', 'bg-slate-700');
-          }, 2000);
-        }
-      });
-    }
-
-    async function exportPDF() {
-      var jsPDF = window.jspdf.jsPDF;
-      var scopeElem = document.getElementById('exportScope');
-      var scope = scopeElem ? scopeElem.value : 'all';
-      var targetZones = scope === 'current' ? [zones[activeZoneIndex]] : zones;
-
-      var pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      var pdfWidth = 277;
-      var pdfMaxHeight = 190;
-      var marginX = 10;
-      var marginY = 10;
-
-      var container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.width = '850px';
-      document.body.appendChild(container);
-
-      for (var i = 0; i < targetZones.length; i++) {
-        var zone = targetZones[i];
-        var box = document.createElement('div');
-        box.className = 'sheet-canvas';
-        renderSheetHTML(box, zone);
-
-        container.innerHTML = '';
-        container.appendChild(box);
-
-        var canvas = await html2canvas(box, { 
-          scale: 3,
-          useCORS: true,
-          logging: false
-        });
-        
-        var imgData = canvas.toDataURL('image/png');
-        var imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        var yPos = marginY;
-        if (imgHeight < pdfMaxHeight) {
-          yPos = marginY + (pdfMaxHeight - imgHeight) / 2;
-        }
-
-        if (i > 0) pdf.addPage('a4', 'landscape');
-        pdf.addImage(imgData, 'PNG', marginX, yPos, pdfWidth, imgHeight);
-      }
-
-      document.body.removeChild(container);
-      
-      var catName = (targetZones[0] && targetZones[0].category) ? targetZones[0].category : 'Torneo';
-      pdf.save('Planillas_Padel_' + catName.replace(/\s+/g, '_') + '.pdf');
-    }
-
-    function exportPNG() {
-      var element = document.getElementById('previewArea');
-      if (!element) return;
-      html2canvas(element, { scale: 3 }).then(function(canvas) {
-        var link = document.createElement('a');
-        link.download = 'Planilla_Zona_' + (zones[activeZoneIndex] ? zones[activeZoneIndex].zone : 'A') + '.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      });
-    }
-
-    window.onload = function() {
-      renderZoneTabs();
-      loadZoneData(activeZoneIndex);
-    };
-  </script>
-</body>
-</html>
+          '<td contenteditable="true">' + (f
