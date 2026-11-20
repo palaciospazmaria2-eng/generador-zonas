@@ -15,8 +15,8 @@
         margin: 10mm;
       }
       body {
-        background: white !important;
-        color: black !important;
+        background: #ffffff !important;
+        color: #000000 !important;
         padding: 0 !important;
         margin: 0 !important;
       }
@@ -29,7 +29,7 @@
         padding: 0 !important;
       }
       #previewContainer {
-        background: none !important;
+        background: transparent !important;
         border: none !important;
         padding: 0 !important;
         box-shadow: none !important;
@@ -57,7 +57,8 @@
       table-layout: fixed;
     }
 
-    .sheet-table th, .sheet-table td {
+    .sheet-table th,
+    .sheet-table td {
       border: 1.5px solid #000000;
       text-align: center;
       vertical-align: middle;
@@ -78,7 +79,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-10">
 
-  <!-- Header -->
+  <!-- Barra Superior de Acciones -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 mb-6 shadow-lg no-print">
     <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
@@ -93,48 +94,54 @@
 
       <div class="flex flex-wrap items-center gap-2">
         <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 text-xs">
-          <label class="text-slate-400 px-2 font-semibold">Exportar:</label>
+          <label for="exportScope" class="text-slate-400 px-2 font-semibold">Exportar:</label>
           <select id="exportScope" class="bg-slate-800 text-white font-bold py-1 px-2 rounded focus:outline-none">
             <option value="all">Todas las Zonas</option>
             <option value="current">Solo Zona Activa</option>
           </select>
         </div>
 
-        <button onclick="exportPDF()" id="btnExportPDF" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
+        <button type="button" onclick="exportPDF()" id="btnExportPDF" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow cursor-pointer">
           <i class="fa-solid fa-file-pdf"></i> Descargar PDF
         </button>
-        <button onclick="exportPNG()" id="btnExportPNG" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
+        <button type="button" onclick="exportPNG()" id="btnExportPNG" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow cursor-pointer">
           <i class="fa-solid fa-file-image"></i> Descargar PNG
         </button>
-        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+        <button type="button" onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer">
           <i class="fa-solid fa-print"></i> Imprimir
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Notificación interna -->
+  <!-- Toast de Notificaciones -->
   <div id="toastMsg" class="fixed bottom-4 right-4 z-50 hidden bg-slate-800 border border-amber-400 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 no-print">
     <i class="fa-solid fa-circle-check text-amber-400"></i>
     <span id="toastText">Listo</span>
   </div>
 
+  <!-- Contenedor Principal -->
   <main id="mainContainer" class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Panel Lateral -->
+    <!-- Columna Izquierda: Carga Rápida, Zonas y Edición -->
     <div class="lg:col-span-4 flex flex-col gap-5 no-print">
-      
-      <!-- Carga Rápida -->
+
+      <!-- Carga Rápida por Texto -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
         <h2 class="text-sm font-bold text-amber-400 mb-1 flex items-center gap-2">
-          <i class="fa-solid fa-file-csv"></i> Carga Rápida
+          <i class="fa-solid fa-file-lines"></i> Carga Rápida
         </h2>
         <p class="text-xs text-slate-400 mb-2">
-          Pegá el texto transcripto para generar automáticamente todas las zonas.
+          Pegá el texto transcripto para generar automáticamente todas las zonas y horarios.
         </p>
-        <textarea id="csvInput" rows="6" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400" placeholder="TORNEO: PUNTO DE ORO&#10;CATEGORIA: 6+7&#10;ZONA: A&#10;Pilar Gianfrancesco - Pablo Gascue&#10;Pareja 2&#10;Pareja 3"></textarea>
-        
-        <button onclick="processCSVText()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2">
+        <textarea id="csvInput" rows="7" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-400">CATEGORIA: 6TA CABALLEROS
+ZONA: A
+EMILIANO ALOCK - ARIEL ADAMOLI
+TOMAS CAMPOS - ESTANISLAO MONTERO
+ELIAS GOMEZ - TIZIANO VERON
+Partidos: VIE 1VS2 19HS SAB 2VS3 13HS SAB 1VS3 15HS</textarea>
+
+        <button type="button" onclick="processCSVText()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2 cursor-pointer">
           <i class="fa-solid fa-bolt"></i> Cargar Todas las Zonas
         </button>
       </div>
@@ -146,10 +153,10 @@
             <i class="fa-solid fa-layer-group text-amber-400"></i> Zonas Creadas
           </h2>
           <div class="flex items-center gap-1.5">
-            <button onclick="deleteCurrentZone()" id="btnDeleteZone" class="bg-red-900/50 hover:bg-red-800 text-red-200 px-2 py-0.5 rounded text-xs transition" title="Eliminar zona activa">
+            <button type="button" onclick="deleteCurrentZone()" id="btnDeleteZone" class="bg-red-900/50 hover:bg-red-800 text-red-200 px-2 py-0.5 rounded text-xs transition cursor-pointer" title="Eliminar zona activa">
               <i class="fa-solid fa-trash-can"></i>
             </button>
-            <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-xs transition">
+            <button type="button" onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-xs transition cursor-pointer">
               + Nueva
             </button>
           </div>
@@ -157,32 +164,32 @@
         <div id="zoneTabs" class="flex flex-wrap gap-1.5"></div>
       </div>
 
-      <!-- Edición Manual -->
+      <!-- Edición Manual de la Zona Activa -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
         <h2 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
           <i class="fa-solid fa-pen-to-square text-amber-400"></i> Datos de la Zona Activa
         </h2>
-        
+
         <div class="space-y-2 text-xs">
           <div>
-            <label class="block text-slate-400 mb-1">Nombre del Torneo / Club</label>
+            <label for="inputClub" class="block text-slate-400 mb-1">Complejo / Torneo / Club</label>
             <input type="text" id="inputClub" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-slate-400 mb-1">Categoría</label>
+              <label for="inputCat" class="block text-slate-400 mb-1">Categoría</label>
               <input type="text" id="inputCat" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">Zona</label>
+              <label for="inputZone" class="block text-slate-400 mb-1">Zona</label>
               <input type="text" id="inputZone" oninput="updateCurrentZoneData()" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-white">
             </div>
           </div>
 
           <div class="pt-2">
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-slate-400 font-bold">Parejas Jugadoras</label>
-              <button onclick="toggle4thPair()" id="btnToggle4th" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-amber-300 px-2 py-0.5 rounded transition">
+              <span class="block text-slate-400 font-bold">Parejas Jugadoras</span>
+              <button type="button" onclick="toggle4thPair()" id="btnToggle4th" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-amber-300 px-2 py-0.5 rounded transition cursor-pointer">
                 + 4ta Pareja
               </button>
             </div>
@@ -193,7 +200,7 @@
 
     </div>
 
-    <!-- Vista Previa de la Planilla A4 -->
+    <!-- Columna Derecha: Vista Previa A4 -->
     <div class="lg:col-span-8 flex flex-col items-center">
       <div class="w-full flex justify-between items-center mb-2 px-1 no-print">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Vista Previa Hoja A4</span>
@@ -207,32 +214,18 @@
 
   </main>
 
-  <!-- Contenedor oculto para exportar múltiples zonas -->
-  <div id="exportStaging" style="position: fixed; left: -9999px; top: 0; width: 850px; background: #fff;"></div>
+  <!-- Contenedor Oculto para Exportación Multi-Zona -->
+  <div id="exportStaging" style="position: fixed; left: -9999px; top: 0; width: 850px; background: #ffffff;"></div>
 
   <script>
     (function() {
-      var zones = [
-        {
-          id: 'A',
-          club: 'PUNTO DE ORO',
-          category: '5+6',
-          zone: 'A',
-          pairs: [
-            'Micaela Lacaze - Gustavo Lacaze',
-            'Celeste Tondi - Alejandro Tondi',
-            'Micaela Madrid - Daniel Razani'
-          ],
-          fixture: [
-            { match: '1 vs 2', day: 'SÁBADO', time: '21HS' },
-            { match: '2 vs 3', day: 'VIERNES', time: '20HS' },
-            { match: '1 vs 3', day: 'SÁBADO', time: '17HS' }
-          ]
-        }
-      ];
+      'use strict';
 
+      var DEFAULT_CLUB = 'PUNTO DE ORO';
+      var zones = [];
       var activeZoneIndex = 0;
 
+      // Muestra un aviso breve no bloqueante en pantalla
       function showToast(message, isError) {
         var toast = document.getElementById('toastMsg');
         var text = document.getElementById('toastText');
@@ -252,6 +245,7 @@
         }, 3500);
       }
 
+      // Escapa caracteres especiales para atributos HTML
       function escapeHtmlAttr(str) {
         return String(str || '')
           .replace(/&/g, '&amp;')
@@ -260,12 +254,90 @@
           .replace(/>/g, '&gt;');
       }
 
+      // Normaliza abreviaturas y nombres de días de la semana
+      function normalizeDay(rawDay) {
+        if (!rawDay) return '';
+        var clean = String(rawDay).trim().toUpperCase().replace(/[.,;:]+$/, '');
+        var map = {
+          'VIE': 'VIERNES',
+          'VIER': 'VIERNES',
+          'VIERNES': 'VIERNES',
+          'SAB': 'SÁBADO',
+          'SÁB': 'SÁBADO',
+          'SABADO': 'SÁBADO',
+          'SÁBADO': 'SÁBADO',
+          'DOM': 'DOMINGO',
+          'DOMINGO': 'DOMINGO',
+          'LUN': 'LUNES',
+          'LUNES': 'LUNES',
+          'MAR': 'MARTES',
+          'MARTES': 'MARTES',
+          'MIE': 'MIÉRCOLES',
+          'MIÉ': 'MIÉRCOLES',
+          'MIERCOLES': 'MIÉRCOLES',
+          'MIÉRCOLES': 'MIÉRCOLES',
+          'JUE': 'JUEVES',
+          'JUEVES': 'JUEVES'
+        };
+        return map[clean] || clean;
+      }
+
+      // Normaliza identificadores de partidos como 1VS2, 1vs2, 1 vs 2, GVSG, PVSP
+      function normalizeMatch(leftSide, rightSide) {
+        var l = String(leftSide || '').trim().toUpperCase();
+        var r = String(rightSide || '').trim().toUpperCase();
+        return l + ' vs ' + r;
+      }
+
+      // Normaliza horarios como 19HS, 19hs, 19:00 o 19
+      function normalizeTime(rawTime) {
+        if (!rawTime) return '';
+        var t = String(rawTime).trim().toUpperCase().replace(/[.,;]+$/, '');
+        if (/^\d{1,2}(:\d{2})?$/.test(t)) {
+          return t + 'HS';
+        }
+        return t;
+      }
+
+      // Parsea secuencias compactas o separadas de partidos (ej: "Partidos: VIE 1VS2 19HS SAB 2VS3 13HS SAB 1VS3 15HS")
+      function parseMatchesFromLine(line) {
+        var cleaned = String(line || '')
+          .replace(/^PARTIDOS?\s*:?\s*/i, '')
+          .replace(/[,;|]+/g, ' ')
+          .trim();
+
+        if (!cleaned) return [];
+
+        var results = [];
+        // Busca secuencias: DIA (opcional) + (NUM|G|P) + VS + (NUM|G|P) + HORA (opcional)
+        var regex = /(?:(LUNES|MARTES|MIÉRCOLES|MIERCOLES|JUEVES|VIERNES|SÁBADO|SABADO|DOMINGO|LUN|MAR|MIÉ|MIE|JUE|VIE|SÁB|SAB|DOM)\s+)?\b([1-4GP])\s*VS\s*([1-4GP])\b(?:\s+(\d{1,2}(?::\d{2})?\s*HS?))?/gi;
+        var match;
+
+        while ((match = regex.exec(cleaned)) !== null) {
+          results.push({
+            day: normalizeDay(match[1] || ''),
+            match: normalizeMatch(match[2], match[3]),
+            time: normalizeTime(match[4] || '')
+          });
+        }
+
+        return results;
+      }
+
+      // Renderiza las pestañas de zonas en el panel lateral
       function renderZoneTabs() {
         var container = document.getElementById('zoneTabs');
         if (!container) return;
+
         container.innerHTML = zones.map(function(z, idx) {
-          var count = z.pairs ? z.pairs.filter(function(p) { return p && p.trim(); }).length : 0;
-          return '<button onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition ' + (activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600') + '">Zona ' + (z.zone || '') + ' (' + count + ')</button>';
+          var count = (z.pairs || []).filter(function(p) { return p && p.trim().length > 0; }).length;
+          var activeClass = activeZoneIndex === idx
+            ? 'bg-amber-400 text-slate-950'
+            : 'bg-slate-700 text-slate-300 hover:bg-slate-600';
+
+          return '<button type="button" onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ' + activeClass + '">' +
+            'Zona ' + escapeHtmlAttr(z.zone || '') + ' (' + count + ')' +
+          '</button>';
         }).join('');
 
         var delBtn = document.getElementById('btnDeleteZone');
@@ -274,6 +346,7 @@
         }
       }
 
+      // Cambia la zona activa y refresca controles y vista previa
       function switchZone(idx) {
         if (idx < 0 || idx >= zones.length) return;
         activeZoneIndex = idx;
@@ -281,19 +354,22 @@
         loadZoneData(idx);
       }
 
+      // Agrega una nueva zona vacía
       function addNewZone() {
         var nextLetter = String.fromCharCode(65 + zones.length);
         zones.push({
           id: nextLetter,
-          club: (zones[0] && zones[0].club) ? zones[0].club : 'PUNTO DE ORO',
-          category: (zones[0] && zones[0].category) ? zones[0].category : '5+6',
+          club: (zones[0] && zones[0].club) ? zones[0].club : DEFAULT_CLUB,
+          category: (zones[0] && zones[0].category) ? zones[0].category : '',
           zone: nextLetter,
           pairs: ['', '', ''],
-          fixture: []
+          fixture: [],
+          explicit4Pairs: false
         });
         switchZone(zones.length - 1);
       }
 
+      // Elimina la zona activa si hay más de una
       function deleteCurrentZone() {
         if (zones.length <= 1) return;
         zones.splice(activeZoneIndex, 1);
@@ -304,21 +380,24 @@
         showToast('Zona eliminada');
       }
 
+      // Alterna explícitamente entre 3 y 4 parejas en la zona activa
       function toggle4thPair() {
         var z = zones[activeZoneIndex];
         if (!z) return;
-        if (!z.pairs) z.pairs = ['', '', ''];
+        if (!Array.isArray(z.pairs)) z.pairs = ['', '', ''];
 
-        if (z.pairs.length >= 4) {
+        if (z.pairs.length >= 4 || z.explicit4Pairs) {
           z.pairs = z.pairs.slice(0, 3);
+          z.explicit4Pairs = false;
         } else {
           while (z.pairs.length < 4) z.pairs.push('');
+          z.explicit4Pairs = true;
         }
-        z.fixture = [];
         loadZoneData(activeZoneIndex);
         renderZoneTabs();
       }
 
+      // Carga los datos de la zona en el formulario y en la vista previa
       function loadZoneData(idx) {
         var z = zones[idx];
         if (!z) return;
@@ -332,25 +411,33 @@
         if (catElem) catElem.value = z.category || '';
         if (zoneElem) zoneElem.value = z.zone || '';
 
-        if (!z.pairs || z.pairs.length < 3) {
-          z.pairs = z.pairs ? z.pairs.slice() : [];
-          while (z.pairs.length < 3) z.pairs.push('');
+        var nonEmptyCount = (z.pairs || []).filter(function(p) { return p && p.trim().length > 0; }).length;
+        var has4 = Boolean(z.explicit4Pairs || nonEmptyCount >= 4 || (z.pairs && z.pairs.length >= 4 && z.pairs[3] && z.pairs[3].trim().length > 0));
+
+        var displayPairs = (z.pairs || []).slice();
+        if (has4) {
+          while (displayPairs.length < 4) displayPairs.push('');
+          displayPairs = displayPairs.slice(0, 4);
+        } else {
+          displayPairs = displayPairs.slice(0, 3);
+          while (displayPairs.length < 3) displayPairs.push('');
         }
+        z.pairs = displayPairs;
 
         if (btn4th) {
-          btn4th.textContent = z.pairs.length >= 4 ? '- Quitar 4ta' : '+ 4ta Pareja';
+          btn4th.textContent = has4 ? '- Quitar 4ta' : '+ 4ta Pareja';
         }
 
         renderPairsInputs(z.pairs);
         renderSheetHTML(document.getElementById('previewArea'), z);
       }
 
+      // Renderiza los inputs de parejas en el panel lateral
       function renderPairsInputs(pairs) {
         var container = document.getElementById('pairsInputs');
         if (!container) return;
-        var safe = pairs.slice();
 
-        container.innerHTML = safe.map(function(p, i) {
+        container.innerHTML = (pairs || []).map(function(p, i) {
           return '<div class="flex items-center gap-1.5">' +
             '<span class="text-slate-500 font-bold w-4 text-xs">' + (i + 1) + '</span>' +
             '<input type="text" value="' + escapeHtmlAttr(p) + '" oninput="updatePair(' + i + ', this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-xs text-white">' +
@@ -358,12 +445,17 @@
         }).join('');
       }
 
+      // Actualiza una pareja específica al escribir
       function updatePair(pairIndex, value) {
-        zones[activeZoneIndex].pairs[pairIndex] = value;
+        var z = zones[activeZoneIndex];
+        if (!z) return;
+        if (!Array.isArray(z.pairs)) z.pairs = ['', '', ''];
+        z.pairs[pairIndex] = value;
         renderZoneTabs();
-        renderSheetHTML(document.getElementById('previewArea'), zones[activeZoneIndex]);
+        renderSheetHTML(document.getElementById('previewArea'), z);
       }
 
+      // Actualiza club, categoría o zona al escribir
       function updateCurrentZoneData() {
         var z = zones[activeZoneIndex];
         if (!z) return;
@@ -380,20 +472,29 @@
         renderSheetHTML(document.getElementById('previewArea'), z);
       }
 
+      // Determina si la zona tiene 4 parejas reales o activadas explícitamente
+      function getZoneRowCount(z) {
+        var pairs = z.pairs || [];
+        var nonEmpty = pairs.filter(function(p) { return p && p.trim().length > 0; });
+        var hasFourthNonEmpty = Boolean(pairs[3] && pairs[3].trim().length > 0);
+        if (z.explicit4Pairs || nonEmpty.length >= 4 || hasFourthNonEmpty) {
+          return 4;
+        }
+        return 3;
+      }
+
+      // Construye el HTML de la planilla oficial en el elemento destino
       function renderSheetHTML(targetElement, z) {
         if (!targetElement || !z) return;
 
-        var allPairs = z.pairs || [];
-        var validPairs = allPairs.filter(function(p) { return p && p.trim().length > 0; });
-        var is4Pairs = validPairs.length > 3 || allPairs.length >= 4;
-        var numRows = is4Pairs ? 4 : 3;
+        var numRows = getZoneRowCount(z);
+        var is4Pairs = numRows === 4;
 
-        var safePairs = allPairs.slice();
-        while (safePairs.length < numRows) safePairs.push('');
-
-        var defaultMatchNames = is4Pairs 
-          ? ['1 vs 4', '2 vs 3', 'G vs G', 'P vs P']
-          : ['1 vs 2', '2 vs 3', '1 vs 3'];
+        var nonEmptyPairs = (z.pairs || []).filter(function(p) { return p && p.trim().length > 0; });
+        var safePairs = nonEmptyPairs.slice(0, numRows);
+        while (safePairs.length < numRows) {
+          safePairs.push('');
+        }
 
         var defaultFixture = is4Pairs
           ? [
@@ -408,125 +509,127 @@
               { match: '1 vs 3', day: 'SÁBADO', time: '17HS' }
             ];
 
+        var parsedFixture = (Array.isArray(z.fixture) && z.fixture.length > 0) ? z.fixture : [];
         var fixtureRows = [];
-        for (var k = 0; k < numRows; k++) {
-          if (z.fixture && z.fixture[k]) {
-            fixtureRows.push(z.fixture[k]);
-          } else {
+        var totalFixtureRows = Math.max(numRows, parsedFixture.length);
+
+        for (var k = 0; k < totalFixtureRows; k++) {
+          if (parsedFixture[k]) {
+            fixtureRows.push(parsedFixture[k]);
+          } else if (defaultFixture[k]) {
             fixtureRows.push(defaultFixture[k]);
           }
         }
 
         var jugWidth = is4Pairs ? '38%' : '43%';
         var colWidth = '5%';
+        var clubName = (z.club && z.club.trim()) ? z.club.trim() : DEFAULT_CLUB;
 
-        var rowsHTML = safePairs.slice(0, numRows).map(function(p, i) {
-          return '<tr style="height: 38px;">' +
-            '<td style="font-size: 13px;">' + (i + 1) + '</td>' +
-            '<td style="text-align: left; padding-left: 10px; font-size: 13px; font-weight: 700;" contenteditable="true">' + (p || '') + '</td>' +
-            '<td class="' + (i === 0 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 0) + '"></td>' +
-            '<td class="' + (i === 1 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 1) + '"></td>' +
-            '<td class="' + (i === 2 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 2) + '"></td>' +
-            (is4Pairs ? '<td class="' + (i === 3 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 3) + '"></td>' : '') +
-            '<td contenteditable="true"></td>' +
-            '<td contenteditable="true"></td>' +
-            '<td contenteditable="true"></td>' +
-            '<td contenteditable="true"></td>' +
-          '</tr>';
+        var rowsHTML = safePairs.map(function(p, i) {
+          var cells = [];
+          cells.push('<td style="font-size: 13px;">' + (i + 1) + '</td>');
+          cells.push('<td style="text-align: left; padding-left: 10px; font-size: 13px; font-weight: 700;" contenteditable="true">' + escapeHtmlAttr(p) + '</td>');
+
+          for (var c = 0; c < numRows; c++) {
+            var isDiag = (c === i);
+            cells.push('<td class="' + (isDiag ? 'bg-black-cell' : '') + '" contenteditable="' + (!isDiag) + '"></td>');
+          }
+
+          cells.push('<td contenteditable="true"></td>');
+          cells.push('<td contenteditable="true"></td>');
+          cells.push('<td contenteditable="true"></td>');
+          cells.push('<td contenteditable="true"></td>');
+
+          return '<tr style="height: 38px;">' + cells.join('') + '</tr>';
         }).join('');
 
-        var fixtureHTML = fixtureRows.slice(0, numRows).map(function(f, i) {
-          var finalMatchName = is4Pairs ? (defaultMatchNames[i] || f.match) : (f.match || defaultMatchNames[i]);
-
+        var fixtureHTML = fixtureRows.map(function(f) {
           return '<tr style="height: 30px;">' +
-            '<td style="text-transform: uppercase;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</td>' +
-            '<td contenteditable="true">' + finalMatchName + '</td>' +
-            '<td style="text-transform: uppercase;" contenteditable="true">' + (f.day || '') + '</td>' +
-            '<td contenteditable="true">' + (f.time || '') + '</td>' +
+            '<td style="text-transform: uppercase;" contenteditable="true">' + escapeHtmlAttr(clubName) + '</td>' +
+            '<td contenteditable="true">' + escapeHtmlAttr(f.match || '') + '</td>' +
+            '<td style="text-transform: uppercase;" contenteditable="true">' + escapeHtmlAttr(f.day || '') + '</td>' +
+            '<td contenteditable="true">' + escapeHtmlAttr(f.time || '') + '</td>' +
             '<td contenteditable="true"></td>' +
           '</tr>';
         }).join('');
+
+        var headerCols = ['<th>N°</th>', '<th>JUGADORES</th>'];
+        for (var h = 1; h <= numRows; h++) {
+          headerCols.push('<th>' + h + '</th>');
+        }
+        headerCols.push('<th>PTOS.</th>', '<th>SETS</th>', '<th>GAMES</th>', '<th>POS.</th>');
+
+        var colGroupCols = [
+          '<col style="width: 5%;">',
+          '<col style="width: ' + jugWidth + ';">'
+        ];
+        for (var g = 0; g < numRows; g++) {
+          colGroupCols.push('<col style="width: ' + colWidth + ';">');
+        }
+        colGroupCols.push(
+          '<col style="width: 8%;">',
+          '<col style="width: 8%;">',
+          '<col style="width: 8%;">',
+          '<col style="width: 8%;">'
+        );
 
         targetElement.innerHTML = '' +
-          '<!-- Cabecera de la Planilla -->' +
+          '<!-- Encabezado Superior: Club, Categoría y Zona -->' +
           '<table class="sheet-table">' +
             '<tr>' +
-              '<td style="width: 55%; font-size: 18px; text-transform: uppercase; padding: 10px;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</td>' +
-              '<td style="width: 25%; font-size: 15px; text-transform: uppercase; padding: 10px;" contenteditable="true">CAT: ' + (z.category || '') + '</td>' +
-              '<td style="width: 20%; font-size: 16px; text-transform: uppercase; background-color: #f1f5f9; padding: 10px;" contenteditable="true">ZONA ' + (z.zone || '') + '</td>' +
+              '<td colspan="2" style="width: 100%; font-size: 18px; text-transform: uppercase; padding: 10px;" contenteditable="true">' + escapeHtmlAttr(clubName) + '</td>' +
+            '</tr>' +
+            '<tr>' +
+              '<td style="width: 65%; font-size: 15px; text-transform: uppercase; padding: 8px; text-align: left; padding-left: 14px;" contenteditable="true">CATEGORIA: ' + escapeHtmlAttr(z.category || '') + '</td>' +
+              '<td style="width: 35%; font-size: 15px; text-transform: uppercase; background-color: #f1f5f9; padding: 8px;" contenteditable="true">ZONA: ' + escapeHtmlAttr(z.zone || '') + '</td>' +
             '</tr>' +
           '</table>' +
 
-          '<!-- Tabla Principal de Posiciones y Cruces -->' +
+          '<!-- Tabla Principal de Parejas y Estadísticas -->' +
           '<table class="sheet-table" style="border-top: none;">' +
-            '<colgroup>' +
-              '<col style="width: 5%;">' +
-              '<col style="width: ' + jugWidth + ';">' +
-              '<col style="width: ' + colWidth + ';">' +
-              '<col style="width: ' + colWidth + ';">' +
-              '<col style="width: ' + colWidth + ';">' +
-              (is4Pairs ? '<col style="width: ' + colWidth + ';">' : '') +
-              '<col style="width: 8%;">' +
-              '<col style="width: 8%;">' +
-              '<col style="width: 8%;">' +
-              '<col style="width: 8%;">' +
-            '</colgroup>' +
+            '<colgroup>' + colGroupCols.join('') + '</colgroup>' +
             '<thead style="background-color: #f1f5f9;">' +
-              '<tr style="height: 34px;">' +
-                '<th>N°</th>' +
-                '<th>JUGADORES</th>' +
-                '<th>1</th>' +
-                '<th>2</th>' +
-                '<th>3</th>' +
-                (is4Pairs ? '<th>4</th>' : '') +
-                '<th>PTS</th>' +
-                '<th>SETS</th>' +
-                '<th>GAMES</th>' +
-                '<th>POS</th>' +
-              '</tr>' +
+              '<tr style="height: 34px;">' + headerCols.join('') + '</tr>' +
             '</thead>' +
-            '<tbody>' +
-              rowsHTML +
-            '</tbody>' +
+            '<tbody>' + rowsHTML + '</tbody>' +
           '</table>' +
 
-          '<!-- Sección Inferior: Fixture al 100% del ancho -->' +
+          '<!-- Tabla Inferior de Fixture al 100% del Ancho -->' +
           '<div style="padding: 12px; border-top: 1.5px solid #000000;">' +
             '<table class="sheet-table" style="width: 100%;">' +
               '<thead style="background-color: #f1f5f9;">' +
                 '<tr style="height: 28px;">' +
-                  '<th style="width: 30%;">SEDE / CLUB</th>' +
+                  '<th style="width: 30%;">COMPLEJO</th>' +
                   '<th style="width: 16%;">PARTIDO</th>' +
-                  '<th style="width: 18%;">DÍA</th>' +
+                  '<th style="width: 18%;">DIA</th>' +
                   '<th style="width: 14%;">HORA</th>' +
                   '<th style="width: 22%;">RESULTADO</th>' +
                 '</tr>' +
               '</thead>' +
-              '<tbody>' +
-                fixtureHTML +
-              '</tbody>' +
+              '<tbody>' + fixtureHTML + '</tbody>' +
             '</table>' +
           '</div>';
       }
 
-      function processCSVText() {
+      // Procesa texto estructurado con una o múltiples zonas y líneas de partidos
+      function processCSVText(silentMode) {
         var input = document.getElementById('csvInput');
         if (!input || !input.value.trim()) {
-          showToast('Pegá el texto de las zonas primero', true);
+          if (!silentMode) showToast('Pegá el texto de las zonas primero', true);
           return;
         }
 
         var lines = input.value.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
         var parsedZones = [];
-        var currentClub = (zones[0] && zones[0].club) ? zones[0].club : 'PUNTO DE ORO';
-        var currentCat = (zones[0] && zones[0].category) ? zones[0].category : '';
+        var currentClub = (zones[0] && zones[0].club) ? zones[0].club : DEFAULT_CLUB;
+        var currentCat = '';
         var currentZone = null;
 
         lines.forEach(function(line) {
           var upper = line.toUpperCase();
 
-          if (upper.startsWith('TORNEO:') || upper.startsWith('CLUB:')) {
-            currentClub = line.split(':').slice(1).join(':').trim();
+          if (upper.startsWith('TORNEO:') || upper.startsWith('CLUB:') || upper.startsWith('COMPLEJO:')) {
+            currentClub = line.split(':').slice(1).join(':').trim() || DEFAULT_CLUB;
             if (currentZone && currentZone.pairs.length === 0) {
               currentZone.club = currentClub;
             }
@@ -535,7 +638,7 @@
             if (currentZone && currentZone.pairs.length === 0) {
               currentZone.category = currentCat;
             }
-          } else if (upper.startsWith('ZONA')) {
+          } else if (/^ZONA\b/i.test(line)) {
             if (currentZone) parsedZones.push(currentZone);
             var zLabel = line.replace(/^ZONA\s*:?\s*/i, '').trim() || String.fromCharCode(65 + parsedZones.length);
             currentZone = {
@@ -544,8 +647,25 @@
               category: currentCat,
               zone: zLabel,
               pairs: [],
-              fixture: []
+              fixture: [],
+              explicit4Pairs: false
             };
+          } else if (/^PARTIDOS?\s*:?\s*/i.test(line) || /\b[1-4GP]\s*VS\s*[1-4GP]\b/i.test(line)) {
+            if (!currentZone) {
+              currentZone = {
+                id: 'A',
+                club: currentClub,
+                category: currentCat,
+                zone: 'A',
+                pairs: [],
+                fixture: [],
+                explicit4Pairs: false
+              };
+            }
+            var parsedMatches = parseMatchesFromLine(line);
+            if (parsedMatches.length > 0) {
+              currentZone.fixture = currentZone.fixture.concat(parsedMatches);
+            }
           } else {
             if (!currentZone) {
               currentZone = {
@@ -554,34 +674,13 @@
                 category: currentCat,
                 zone: 'A',
                 pairs: [],
-                fixture: []
+                fixture: [],
+                explicit4Pairs: false
               };
             }
-
-            var matchPattern = /^(\d\s*vs\s*\d|[GP]\s*vs\s*[GP])/i;
-            if (matchPattern.test(line)) {
-              var parts = line.split(/[\|\t;]+/);
-              if (parts.length >= 2) {
-                currentZone.fixture.push({
-                  match: (parts[0] || '').trim(),
-                  day: (parts[1] || '').trim(),
-                  time: (parts[2] || '').trim()
-                });
-              } else {
-                var mMatch = line.match(matchPattern);
-                var rest = line.replace(matchPattern, '').replace(/^[\s\-:]+/, '').trim();
-                var tokens = rest.split(/\s+/);
-                currentZone.fixture.push({
-                  match: mMatch ? mMatch[0] : '',
-                  day: tokens[0] || '',
-                  time: tokens.slice(1).join(' ') || ''
-                });
-              }
-            } else {
-              var cleanPair = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
-              if (cleanPair) {
-                currentZone.pairs.push(cleanPair);
-              }
+            var cleanPair = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
+            if (cleanPair) {
+              currentZone.pairs.push(cleanPair);
             }
           }
         });
@@ -589,12 +688,18 @@
         if (currentZone) parsedZones.push(currentZone);
 
         if (parsedZones.length > 0) {
+          parsedZones.forEach(function(pz) {
+            pz.explicit4Pairs = pz.pairs.length >= 4;
+          });
           zones = parsedZones;
           switchZone(0);
-          showToast('Se cargaron ' + parsedZones.length + ' zona(s) correctamente');
+          if (!silentMode) {
+            showToast('Se cargaron ' + parsedZones.length + ' zona(s) correctamente');
+          }
         }
       }
 
+      // Exporta la zona activa o todas las zonas a un PDF A4 apaisado
       async function exportPDF() {
         if (typeof window.html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
           showToast('Las librerías de PDF aún están cargando. Intentá en unos segundos.', true);
@@ -662,6 +767,7 @@
         }
       }
 
+      // Exporta la zona activa o todas las zonas a PNG
       async function exportPNG() {
         if (typeof window.html2canvas === 'undefined') {
           showToast('La librería de captura aún está cargando. Intentá en unos segundos.', true);
@@ -711,7 +817,7 @@
         }
       }
 
-      // Exponer funciones globalmente en window
+      // Exposición global de manejadores de eventos
       window.switchZone = switchZone;
       window.addNewZone = addNewZone;
       window.deleteCurrentZone = deleteCurrentZone;
@@ -722,12 +828,12 @@
       window.exportPDF = exportPDF;
       window.exportPNG = exportPNG;
 
-      // Inicialización segura inmediata y en eventos del ciclo de vida del documento
+      // Inicialización inmediata y en eventos del ciclo de vida
       function initApp() {
         try {
-          switchZone(0);
-        } catch (e) {
-          console.error('Error al inicializar la planilla:', e);
+          processCSVText(true);
+        } catch (err) {
+          console.error('Error al inicializar la planilla:', err);
         }
       }
 
