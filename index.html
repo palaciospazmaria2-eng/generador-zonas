@@ -10,10 +10,35 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     @media print {
-      body { background: white !important; color: black !important; padding: 0 !important; }
-      .no-print { display: none !important; }
-      #previewWrapper { padding: 0 !important; background: none !important; border: none !important; }
-      .sheet-canvas { box-shadow: none !important; max-width: 100% !important; width: 100% !important; }
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #mainContainer {
+        display: block !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      #previewContainer {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .sheet-canvas {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+      }
     }
 
     .sheet-canvas {
@@ -41,6 +66,7 @@
       padding: 6px 4px;
       font-size: 13px;
       line-height: 1.2;
+      word-wrap: break-word;
     }
 
     .bg-black-cell {
@@ -74,10 +100,10 @@
           </select>
         </div>
 
-        <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
+        <button onclick="exportPDF()" id="btnExportPDF" class="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
           <i class="fa-solid fa-file-pdf"></i> Descargar PDF
         </button>
-        <button onclick="exportPNG()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
+        <button onclick="exportPNG()" id="btnExportPNG" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow">
           <i class="fa-solid fa-file-image"></i> Descargar PNG
         </button>
         <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
@@ -87,7 +113,13 @@
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <!-- Notificación interna (sin alert) -->
+  <div id="toastMsg" class="fixed bottom-4 right-4 z-50 hidden bg-slate-800 border border-amber-400 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 no-print">
+    <i class="fa-solid fa-circle-check text-amber-400"></i>
+    <span id="toastText">Listo</span>
+  </div>
+
+  <main id="mainContainer" class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
     <!-- Panel Lateral -->
     <div class="lg:col-span-4 flex flex-col gap-5 no-print">
@@ -113,16 +145,18 @@
           <h2 class="text-xs font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-amber-400"></i> Zonas Creadas
           </h2>
-          <div class="flex gap-1">
-            <button onclick="deleteCurrentZone()" class="bg-red-900/60 hover:bg-red-700 text-red-200 px-2 py-0.5 rounded text-xs transition" title="Eliminar zona actual">
-              <i class="fa-solid fa-trash"></i>
+          <div class="flex items-center gap-1.5">
+            <button onclick="removeCurrentZone()" id="btnDeleteZone" class="bg-red-900/50 hover:bg-red-800 text-red-200 px-2 py-0.5 rounded text-xs transition" title="Eliminar zona activa">
+              <i class="fa-solid fa-trash-can"></i>
             </button>
             <button onclick="addNewZone()" class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-0.5 rounded text-xs transition">
               + Nueva
             </button>
           </div>
         </div>
-        <div id="zoneTabs" class="flex flex-wrap gap-1.5"></div>
+        <div id="zoneTabs" class="flex flex-wrap gap-1.5">
+          <!-- Dinámico -->
+        </div>
       </div>
 
       <!-- Edición Manual -->
@@ -150,11 +184,13 @@
           <div class="pt-2">
             <div class="flex justify-between items-center mb-1">
               <label class="block text-slate-400 font-bold">Parejas Jugadoras</label>
-              <button onclick="toggle4thPair()" id="btnToggle4th" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-amber-300 px-2 py-0.5 rounded">
+              <button onclick="toggleFourthPair()" id="btnToggleFourth" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-amber-300 px-2 py-0.5 rounded transition">
                 + 4ta Pareja
               </button>
             </div>
-            <div id="pairsInputs" class="space-y-1.5"></div>
+            <div id="pairsInputs" class="space-y-1.5">
+              <!-- Dinámico -->
+            </div>
           </div>
         </div>
       </div>
@@ -168,17 +204,20 @@
         <span class="text-xs text-amber-400"><i class="fa-solid fa-info-circle"></i> Podés hacer clic en las celdas para editar texto.</span>
       </div>
 
-      <div id="previewWrapper" class="w-full flex justify-center bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-inner overflow-x-auto">
-        <div id="previewArea" class="sheet-canvas shadow-2xl"></div>
+      <div id="previewContainer" class="w-full flex justify-center bg-slate-950/50 p-6 rounded-xl border border-slate-800 shadow-inner overflow-x-auto">
+        <div id="previewArea" class="sheet-canvas shadow-2xl">
+          <!-- Render dinámico -->
+        </div>
       </div>
     </div>
 
   </main>
 
-  <!-- Contenedor oculto para exportar múltiples zonas -->
-  <div id="exportStaging" style="position: fixed; left: -9999px; top: 0; width: 850px;"></div>
+  <!-- Contenedor oculto fuera de pantalla para renderizar cada zona al exportar -->
+  <div id="exportStaging" style="position: fixed; left: -9999px; top: 0; width: 850px; background: #fff;"></div>
 
   <script>
+    // Estado inicial de zonas
     var zones = [
       {
         id: 'A',
@@ -200,14 +239,38 @@
 
     var activeZoneIndex = 0;
 
+    function showToast(message) {
+      var toast = document.getElementById('toastMsg');
+      var text = document.getElementById('toastText');
+      if (!toast || !text) return;
+      text.textContent = message;
+      toast.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(function() {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    function escapeHtmlAttr(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
     function renderZoneTabs() {
       var container = document.getElementById('zoneTabs');
       if (!container) return;
       container.innerHTML = zones.map(function(z, idx) {
-        var count = (z && z.pairs) ? z.pairs.filter(function(p) { return p && p.trim(); }).length : 0;
-        var zName = (z && z.zone) ? z.zone : 'A';
-        return '<button onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition ' + (activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600') + '">Zona ' + zName + ' (' + count + ')</button>';
+        var count = z.pairs ? z.pairs.filter(function(p) { return p && p.trim(); }).length : 0;
+        return '<button onclick="switchZone(' + idx + ')" class="px-2.5 py-1 rounded text-xs font-bold transition ' + (activeZoneIndex === idx ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600') + '">Zona ' + (z.zone || '') + ' (' + count + ')</button>';
       }).join('');
+
+      var delBtn = document.getElementById('btnDeleteZone');
+      if (delBtn) {
+        delBtn.style.display = zones.length > 1 ? 'inline-block' : 'none';
+      }
     }
 
     function switchZone(idx) {
@@ -230,16 +293,21 @@
       switchZone(zones.length - 1);
     }
 
-    function deleteCurrentZone() {
+    function removeCurrentZone() {
       if (zones.length <= 1) return;
       zones.splice(activeZoneIndex, 1);
-      if (activeZoneIndex >= zones.length) activeZoneIndex = zones.length - 1;
+      if (activeZoneIndex >= zones.length) {
+        activeZoneIndex = zones.length - 1;
+      }
       switchZone(activeZoneIndex);
+      showToast('Zona eliminada');
     }
 
-    function toggle4thPair() {
+    function toggleFourthPair() {
       var z = zones[activeZoneIndex];
       if (!z) return;
+      if (!z.pairs) z.pairs = ['', '', ''];
+
       if (z.pairs.length >= 4) {
         z.pairs = z.pairs.slice(0, 3);
       } else {
@@ -257,30 +325,39 @@
       var clubElem = document.getElementById('inputClub');
       var catElem = document.getElementById('inputCat');
       var zoneElem = document.getElementById('inputZone');
-      var btn4th = document.getElementById('btnToggle4th');
+      var btnFourth = document.getElementById('btnToggleFourth');
 
       if (clubElem) clubElem.value = z.club || '';
       if (catElem) catElem.value = z.category || '';
       if (zoneElem) zoneElem.value = z.zone || '';
-      if (btn4th) btn4th.textContent = (z.pairs && z.pairs.length >= 4) ? '- Quitar 4ta' : '+ 4ta Pareja';
 
-      renderPairsInputs(z.pairs || []);
+      if (!z.pairs || z.pairs.length < 3) {
+        z.pairs = z.pairs ? z.pairs.slice() : [];
+        while (z.pairs.length < 3) z.pairs.push('');
+      }
+
+      if (btnFourth) {
+        btnFourth.textContent = z.pairs.length >= 4 ? '- Quitar 4ta' : '+ 4ta Pareja';
+      }
+
+      renderPairsInputs(z.pairs);
       renderSheetHTML(document.getElementById('previewArea'), z);
     }
 
     function renderPairsInputs(pairs) {
       var container = document.getElementById('pairsInputs');
       if (!container) return;
-      var safe = (pairs && pairs.length) ? pairs.slice() : ['', '', ''];
+      var safe = pairs.slice();
 
       container.innerHTML = safe.map(function(p, i) {
-        return '<div class="flex items-center gap-1.5"><span class="text-slate-500 font-bold w-4 text-xs">' + (i + 1) + '</span><input type="text" value="' + (p || '').replace(/"/g, '&quot;') + '" oninput="updatePair(' + i + ', this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-xs text-white"></div>';
+        return '<div class="flex items-center gap-1.5">' +
+          '<span class="text-slate-500 font-bold w-4 text-xs">' + (i + 1) + '</span>' +
+          '<input type="text" value="' + escapeHtmlAttr(p) + '" oninput="updatePair(' + i + ', this.value)" placeholder="Jugador 1 - Jugador 2" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-xs text-white">' +
+        '</div>';
       }).join('');
     }
 
     function updatePair(pairIndex, value) {
-      if (!zones[activeZoneIndex]) return;
-      if (!zones[activeZoneIndex].pairs) zones[activeZoneIndex].pairs = [];
       zones[activeZoneIndex].pairs[pairIndex] = value;
       renderZoneTabs();
       renderSheetHTML(document.getElementById('previewArea'), zones[activeZoneIndex]);
@@ -305,14 +382,17 @@
     function renderSheetHTML(targetElement, z) {
       if (!targetElement || !z) return;
 
-      var rawPairs = z.pairs || [];
-      var validPairs = rawPairs.filter(function(p) { return p && p.trim().length > 0; });
-      
-      var is4Pairs = validPairs.length > 3 || rawPairs.length >= 4;
+      var allPairs = z.pairs || [];
+      var validPairs = allPairs.filter(function(p) { return p && p.trim().length > 0; });
+      var is4Pairs = validPairs.length > 3 || allPairs.length >= 4;
       var numRows = is4Pairs ? 4 : 3;
 
-      var safePairs = rawPairs.slice();
+      var safePairs = allPairs.slice();
       while (safePairs.length < numRows) safePairs.push('');
+
+      var defaultMatchNames = is4Pairs 
+        ? ['1 vs 4', '2 vs 3', 'G vs G', 'P vs P']
+        : ['1 vs 2', '2 vs 3', '1 vs 3'];
 
       var defaultFixture = is4Pairs
         ? [
@@ -327,13 +407,21 @@
             { match: '1 vs 3', day: 'SÁBADO', time: '17HS' }
           ];
 
-      var fixtureRows = (z.fixture && z.fixture.length > 0) ? z.fixture : defaultFixture;
+      var fixtureRows = [];
+      for (var k = 0; k < numRows; k++) {
+        if (z.fixture && z.fixture[k]) {
+          fixtureRows.push(z.fixture[k]);
+        } else {
+          fixtureRows.push(defaultFixture[k]);
+        }
+      }
+
       var jugWidth = is4Pairs ? '38%' : '43%';
       var colWidth = '5%';
 
       var rowsHTML = safePairs.slice(0, numRows).map(function(p, i) {
-        return '<tr style="height: 42px;">' +
-          '<td style="font-size: 14px;">' + (i + 1) + '</td>' +
+        return '<tr style="height: 38px;">' +
+          '<td style="font-size: 13px;">' + (i + 1) + '</td>' +
           '<td style="text-align: left; padding-left: 10px; font-size: 13px; font-weight: 700;" contenteditable="true">' + (p || '') + '</td>' +
           '<td class="' + (i === 0 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 0) + '"></td>' +
           '<td class="' + (i === 1 ? 'bg-black-cell' : '') + '" contenteditable="' + (i !== 1) + '"></td>' +
@@ -346,24 +434,30 @@
         '</tr>';
       }).join('');
 
-      var fixtureHTML = fixtureRows.map(function(f) {
+      var fixtureHTML = fixtureRows.slice(0, numRows).map(function(f, i) {
+        // REGLA FORZADA: Si hay 4 parejas, el nombre del partido siempre es 1 vs 4, 2 vs 3, G vs G, P vs P
+        var finalMatchName = is4Pairs ? (defaultMatchNames[i] || f.match) : (f.match || defaultMatchNames[i]);
+
         return '<tr style="height: 30px;">' +
-          '<td contenteditable="true" style="font-size: 12px;">' + (f.match || '') + '</td>' +
-          '<td contenteditable="true" style="font-size: 12px;">' + (f.day || '') + '</td>' +
-          '<td contenteditable="true" style="font-size: 12px;">' + (f.time || '') + '</td>' +
-          '<td contenteditable="true" style="font-size: 12px;"></td>' +
+          '<td style="text-transform: uppercase;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</td>' +
+          '<td contenteditable="true">' + finalMatchName + '</td>' +
+          '<td style="text-transform: uppercase;" contenteditable="true">' + (f.day || '') + '</td>' +
+          '<td contenteditable="true">' + (f.time || '') + '</td>' +
+          '<td contenteditable="true"></td>' +
         '</tr>';
       }).join('');
 
-      var html = '' +
+      targetElement.innerHTML = '' +
+        '<!-- Cabecera de la Planilla -->' +
         '<table class="sheet-table">' +
           '<tr>' +
-            '<td style="width: 55%; font-size: 18px; letter-spacing: 0.5px; padding: 10px;" contenteditable="true">' + (z.club || 'TORNEO') + '</td>' +
-            '<td style="width: 25%; font-size: 15px; padding: 10px;" contenteditable="true">CAT: ' + (z.category || '') + '</td>' +
-            '<td style="width: 20%; font-size: 16px; background: #f1f5f9; padding: 10px;" contenteditable="true">ZONA ' + (z.zone || '') + '</td>' +
+            '<td style="width: 52%; font-size: 18px; text-transform: uppercase; padding: 10px;" contenteditable="true">' + (z.club || 'PUNTO DE ORO') + '</td>' +
+            '<td style="width: 26%; font-size: 15px; text-transform: uppercase; padding: 10px;" contenteditable="true">CATEGORÍA: ' + (z.category || '') + '</td>' +
+            '<td style="width: 22%; font-size: 16px; text-transform: uppercase; background-color: #f1f5f9; padding: 10px;" contenteditable="true">ZONA ' + (z.zone || '') + '</td>' +
           '</tr>' +
         '</table>' +
 
+        '<!-- Tabla Principal de Posiciones y Cruces -->' +
         '<table class="sheet-table" style="border-top: none;">' +
           '<colgroup>' +
             '<col style="width: 5%;">' +
@@ -377,4 +471,252 @@
             '<col style="width: 8%;">' +
             '<col style="width: 8%;">' +
           '</colgroup>' +
-          '<thead style="background: #f1f5f9;">
+          '<thead style="background-color: #f1f5f9;">' +
+            '<tr style="height: 34px;">' +
+              '<th>N°</th>' +
+              '<th>JUGADORES</th>' +
+              '<th>1</th>' +
+              '<th>2</th>' +
+              '<th>3</th>' +
+              (is4Pairs ? '<th>4</th>' : '') +
+              '<th>PTS</th>' +
+              '<th>SETS</th>' +
+              '<th>GAMES</th>' +
+              '<th>POS</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            rowsHTML +
+          '</tbody>' +
+        '</table>' +
+
+        '<!-- Sección Inferior: Fixture + Clasificados -->' +
+        '<div style="padding: 12px; display: flex; gap: 14px; align-items: stretch; border-top: 1.5px solid #000000;">' +
+          '<div style="width: 68%;">' +
+            '<table class="sheet-table">' +
+              '<thead style="background-color: #f1f5f9;">' +
+                '<tr style="height: 28px;">' +
+                  '<th style="width: 28%;">SEDE</th>' +
+                  '<th style="width: 18%;">PARTIDO</th>' +
+                  '<th style="width: 19%;">DÍA</th>' +
+                  '<th style="width: 15%;">HORA</th>' +
+                  '<th style="width: 20%;">RESULTADO</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' +
+                fixtureHTML +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+
+          '<div style="width: 32%; border: 1.5px solid #000000; padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; font-size: 11px;">' +
+            '<div style="font-weight: 800; border-bottom: 1.5px solid #000000; padding-bottom: 4px; text-align: center;">CLASIFICADOS</div>' +
+            '<div contenteditable="true" style="flex: 1; padding-top: 8px; text-align: left; font-weight: 700; line-height: 1.8;">' +
+              '1°: _____________________<br>' +
+              '2°: _____________________<br>' +
+              'OBS: ____________________' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function processCSVText() {
+      var input = document.getElementById('csvInput');
+      if (!input || !input.value.trim()) {
+        showToast('Pegá el texto de las zonas primero');
+        return;
+      }
+
+      var lines = input.value.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      var parsedZones = [];
+      var currentClub = (zones[0] && zones[0].club) ? zones[0].club : 'PUNTO DE ORO';
+      var currentCat = (zones[0] && zones[0].category) ? zones[0].category : '';
+      var currentZone = null;
+
+      lines.forEach(function(line) {
+        var upper = line.toUpperCase();
+
+        if (upper.startsWith('TORNEO:') || upper.startsWith('CLUB:')) {
+          currentClub = line.split(':').slice(1).join(':').trim();
+          if (currentZone && currentZone.pairs.length === 0) {
+            currentZone.club = currentClub;
+          }
+        } else if (upper.startsWith('CATEGORIA:') || upper.startsWith('CATEGORÍA:') || upper.startsWith('CAT:')) {
+          currentCat = line.split(':').slice(1).join(':').trim();
+          if (currentZone && currentZone.pairs.length === 0) {
+            currentZone.category = currentCat;
+          }
+        } else if (upper.startsWith('ZONA')) {
+          if (currentZone) parsedZones.push(currentZone);
+          var zLabel = line.replace(/^ZONA\s*:?\s*/i, '').trim() || String.fromCharCode(65 + parsedZones.length);
+          currentZone = {
+            id: zLabel,
+            club: currentClub,
+            category: currentCat,
+            zone: zLabel,
+            pairs: [],
+            fixture: []
+          };
+        } else {
+          if (!currentZone) {
+            currentZone = {
+              id: 'A',
+              club: currentClub,
+              category: currentCat,
+              zone: 'A',
+              pairs: [],
+              fixture: []
+            };
+          }
+
+          // Detectar si es línea de fixture (ej: "1 vs 2 | SÁBADO | 21HS" o "1 vs 2 - SABADO 20HS")
+          var matchPattern = /^(\d\s*vs\s*\d|[GP]\s*vs\s*[GP])/i;
+          if (matchPattern.test(line)) {
+            var parts = line.split(/[\|\t;]+/);
+            if (parts.length >= 2) {
+              currentZone.fixture.push({
+                match: (parts[0] || '').trim(),
+                day: (parts[1] || '').trim(),
+                time: (parts[2] || '').trim()
+              });
+            } else {
+              var mMatch = line.match(matchPattern);
+              var rest = line.replace(matchPattern, '').replace(/^[\s\-:]+/, '').trim();
+              var tokens = rest.split(/\s+/);
+              currentZone.fixture.push({
+                match: mMatch ? mMatch[0] : '',
+                day: tokens[0] || '',
+                time: tokens.slice(1).join(' ') || ''
+              });
+            }
+          } else {
+            var cleanPair = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
+            if (cleanPair) {
+              currentZone.pairs.push(cleanPair);
+            }
+          }
+        }
+      });
+
+      if (currentZone) parsedZones.push(currentZone);
+
+      if (parsedZones.length > 0) {
+        zones = parsedZones;
+        switchZone(0);
+        showToast('Se cargaron ' + parsedZones.length + ' zona(s) correctamente');
+      }
+    }
+
+    async function exportPDF() {
+      var btn = document.getElementById('btnExportPDF');
+      if (btn) btn.disabled = true;
+      showToast('Generando PDF...');
+
+      try {
+        var scope = document.getElementById('exportScope').value;
+        var targetZones = (scope === 'current') ? [zones[activeZoneIndex]] : zones;
+        var jsPDF = window.jspdf.jsPDF;
+        var pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        var staging = document.getElementById('exportStaging');
+
+        for (var i = 0; i < targetZones.length; i++) {
+          var el = document.createElement('div');
+          el.className = 'sheet-canvas';
+
+          if (scope === 'current') {
+            el.innerHTML = document.getElementById('previewArea').innerHTML;
+          } else {
+            renderSheetHTML(el, targetZones[i]);
+          }
+
+          staging.innerHTML = '';
+          staging.appendChild(el);
+
+          var canvas = await html2canvas(el, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+          });
+          var imgData = canvas.toDataURL('image/png');
+
+          if (i > 0) pdf.addPage();
+          var pdfWidth = pdf.internal.pageSize.getWidth();
+          var pdfHeight = pdf.internal.pageSize.getHeight();
+          var margin = 10;
+          var usableWidth = pdfWidth - margin * 2;
+          var imgHeight = (canvas.height * usableWidth) / canvas.width;
+
+          if (imgHeight > pdfHeight - margin * 2) {
+            imgHeight = pdfHeight - margin * 2;
+            usableWidth = (canvas.width * imgHeight) / canvas.height;
+          }
+
+          var offsetX = (pdfWidth - usableWidth) / 2;
+          pdf.addImage(imgData, 'PNG', offsetX, 12, usableWidth, imgHeight);
+        }
+
+        staging.innerHTML = '';
+        var fileName = scope === 'current'
+          ? 'Planilla_Zona_' + (zones[activeZoneIndex].zone || 'A') + '.pdf'
+          : 'Planillas_Torneo.pdf';
+        pdf.save(fileName);
+        showToast('PDF descargado');
+      } catch (err) {
+        console.error(err);
+        showToast('Error al generar el PDF');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function exportPNG() {
+      var btn = document.getElementById('btnExportPNG');
+      if (btn) btn.disabled = true;
+      showToast('Generando PNG...');
+
+      try {
+        var scope = document.getElementById('exportScope').value;
+        var targetZones = (scope === 'current') ? [zones[activeZoneIndex]] : zones;
+        var staging = document.getElementById('exportStaging');
+
+        for (var i = 0; i < targetZones.length; i++) {
+          var el = document.createElement('div');
+          el.className = 'sheet-canvas';
+
+          if (scope === 'current') {
+            el.innerHTML = document.getElementById('previewArea').innerHTML;
+          } else {
+            renderSheetHTML(el, targetZones[i]);
+          }
+
+          staging.innerHTML = '';
+          staging.appendChild(el);
+
+          var canvas = await html2canvas(el, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+          });
+          var link = document.createElement('a');
+          link.download = 'Planilla_Zona_' + (targetZones[i].zone || (i + 1)) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }
+
+        staging.innerHTML = '';
+        showToast('PNG descargado');
+      } catch (err) {
+        console.error(err);
+        showToast('Error al generar el PNG');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    // Inicialización al cargar la página
+    window.addEventListener('DOMContentLoaded', function() {
+      switchZone(0);
+    });
+  </script>
+</body>
+</html>
